@@ -1,4 +1,6 @@
 from django.contrib import admin
+from .models import CustomUser
+from django.contrib.auth.admin import UserAdmin
 from .models import Customer, Restaurant, Menu, Favorite, Rider, CustomersFeedback, Delivery, Order, StoreOwner, Message
 
 class CustomerAdmin(admin.ModelAdmin):
@@ -94,6 +96,27 @@ class MessageAdmin(admin.ModelAdmin):
         """Display a short snippet of the message"""
         return obj.message[:50]  # Shows the first 50 characters of the message
     message_snippet.short_description = 'Message Preview'
+
+class CustomUserAdmin(UserAdmin):
+    model = CustomUser
+    # Display the fields you want in the list view
+    list_display = ['email', 'first_name', 'last_name', 'is_staff']
+    # Define which fields to display in the form for creating and updating a user
+    fieldsets = (
+        (None, {'fields': ('email', 'first_name', 'last_name', 'password')}),
+        ('Permissions', {'fields': ('is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions')}),
+        ('Important Dates', {'fields': ('last_login', 'date_joined')}),
+    )
+    # Define which fields are required when creating a user
+    add_fieldsets = (
+        (None, {
+            'classes': ('wide',),
+            'fields': ('email', 'first_name', 'last_name', 'password1', 'password2')}
+        ),
+    )
+
+    search_fields = ('email',)
+    ordering = ('email',)
 
 
 

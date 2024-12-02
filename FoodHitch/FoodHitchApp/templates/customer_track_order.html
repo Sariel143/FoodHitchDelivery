@@ -18,6 +18,7 @@
                 <p><strong>Address:</strong> {{ delivery.Address }} </p>
                 <p><strong>Restaurant Name:</strong> {{ delivery.RestaurantID }} </p>
                 <p><strong>Total Payable:</strong> ₱{{ delivery.TotalPayableAmount }} </p>
+                <p><strong>Payment Status:</strong> {{ delivery.OrderID.PaymentStatus }} </p>
                 <p><strong>Payment Method:</strong> {{ delivery.OrderID.PaymentMethod}} </p>
                 <p><strong>Order Date:</strong> {{ delivery.Date|date:"F j, Y, g:i a" }} </p>
             </div>

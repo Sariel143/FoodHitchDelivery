@@ -6,6 +6,8 @@ from django.utils import timezone
 import random
 import string
 import requests
+from django.contrib.auth.models import AbstractUser, Group, Permission
+
 
 class Customer(models.Model):
     CustomerID = models.BigAutoField(primary_key=True)
@@ -259,3 +261,29 @@ class Message(models.Model):
 
     def __str__(self):
         return f"Message from {self.sender} to {self.receiver} at {self.timestamp}"
+    
+class CustomUser(AbstractUser):
+    username = models.CharField(max_length=100, unique=True)
+    first_name = models.CharField(max_length=100)
+    last_name = models.CharField(max_length=100)
+    email = models.EmailField(unique=True)
+    
+    # Set related_name to avoid clash with auth.User's related_name
+    groups = models.ManyToManyField(
+        Group,
+        related_name='customuser_set',  # Custom related name to prevent clash
+        blank=True,
+        help_text='The groups this user belongs to.'
+    )
+    user_permissions = models.ManyToManyField(
+        Permission,
+        related_name='customuser_set',  # Custom related name to prevent clash
+        blank=True,
+        help_text='Specific permissions for this user.'
+    )
+
+    USERNAME_FIELD = 'email'  # Use email as the unique identifier
+    REQUIRED_FIELDS = ['first_name', 'last_name', 'username']  # These fields are required on user creation
+    
+    def __str__(self):
+        return self.email

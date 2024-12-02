@@ -4,7 +4,34 @@ from django.contrib.auth.models import User
 from django.contrib.auth.hashers import make_password
 from django.contrib.auth.hashers import check_password
 from django.core.exceptions import ValidationError
-from .models import Customer, Restaurant, Menu, Rider,Delivery, Order, CustomersFeedback, StoreOwner
+from .models import Customer, Restaurant, Menu, Rider,Delivery, Order, CustomersFeedback, StoreOwner, CustomUser
+
+
+class AdminRegisterForm(forms.Form):
+    first_name = forms.CharField(max_length=100, widget=forms.TextInput(attrs={'placeholder': 'First Name'}))
+    last_name = forms.CharField(max_length=100, widget=forms.TextInput(attrs={'placeholder': 'Last Name'}))
+    username = forms.CharField(max_length=100, widget=forms.TextInput(attrs={'placeholder': 'Username'}))
+    email = forms.EmailField(widget=forms.EmailInput(attrs={'placeholder': 'Email'}))
+    password1 = forms.CharField(widget=forms.PasswordInput(attrs={'placeholder': 'Password'}))
+    password2 = forms.CharField(widget=forms.PasswordInput(attrs={'placeholder': 'Confirm Password'}))
+
+    def clean_password2(self):
+        password1 = self.cleaned_data.get('password1')
+        password2 = self.cleaned_data.get('password2')
+        if password1 != password2:
+            raise ValidationError("Passwords do not match")
+        return password2
+
+    def save(self):
+        # Create a superuser using the form data
+        user = User.objects.create_superuser(
+            username=self.cleaned_data['username'],
+            email=self.cleaned_data['email'],
+            password=self.cleaned_data['password1'],
+            first_name=self.cleaned_data['first_name'],
+            last_name=self.cleaned_data['last_name']
+        )
+        return user
 
 class CustomerRegisterForm(UserCreationForm):
     fullname = forms.CharField(max_length=100, widget=forms.TextInput(attrs={'placeholder': 'Juan Dela Cruz'}))

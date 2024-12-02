@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from .models import Customer, Restaurant, Menu, CartItem, Favorite, Rider,CustomersFeedback, Delivery, DeliveryItem, Order, StoreOwner, Message
 from django.contrib.auth import authenticate, login, logout, update_session_auth_hash
 from django.contrib.auth.decorators import login_required, user_passes_test
-from .forms import CustomerRegisterForm, CustomerLoginForm, UserUpdateForm, CustomerProfileUpdateForm, RiderRegisterForm, MenuForm, RestaurantForm, RiderUpdateForm, StoreOwnerRegisterForm, StoreOwnerUpdateForm
+from .forms import CustomerRegisterForm, CustomerLoginForm, UserUpdateForm, CustomerProfileUpdateForm, RiderRegisterForm, MenuForm, RestaurantForm, RiderUpdateForm, StoreOwnerRegisterForm, StoreOwnerUpdateForm, AdminRegisterForm
 from django.views.decorators.http import require_POST
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib import messages
@@ -135,6 +135,19 @@ def owners_register(request):
         form = StoreOwnerRegisterForm()
 
     return render(request, 'owner_register.html', {'form': form})
+
+logger = logging.getLogger(__name__)
+def admin_register(request):
+    if request.method == 'POST':
+        form = AdminRegisterForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Admin account created successfully!')
+            return redirect('customer_login')  # Replace with the actual login URL
+    else:
+        form = AdminRegisterForm()
+    
+    return render(request, 'admin_register.html', {'form': form})
 
 def owner_base(request):
     return render(request, "owner_base.html")
@@ -668,8 +681,10 @@ def customer_track_order(request):
         # Add menu items to the delivery object
         delivery.menu_items = menu_items
 
+        message_count = Message.objects.filter(receiver=request.user).count()
+
     # Pass the filtered deliveries and menu items to the template
-    return render(request, 'customer_track_order.html', {'deliveries': deliveries})
+    return render(request, 'customer_track_order.html', {'deliveries': deliveries, 'message_notification_count': message_count})
 
 
 
@@ -690,9 +705,11 @@ def get_rider_location(request, RiderID):
 def customer_reward_points(request):
     customer = Customer.objects.get(user=request.user)
     points = customer.Points
+    message_count = Message.objects.filter(receiver=request.user).count()
     context = {
         'points': points,
-        'customer_name': customer.CustomerName
+        'customer_name': customer.CustomerName,
+        'message_notification_count': message_count,
     }
     return render(request, 'customer_rewards_points.html', context)
 
@@ -1095,13 +1112,15 @@ def view_cart(request):
     available_riders = Rider.objects.filter(Availability='available')
     no_available_riders = available_riders.count() == 0  # Flag to indicate if no riders are available
 
+    message_count = Message.objects.filter(receiver=request.user).count()
     # Pass the required data to the template
     context = {
         'cart_items': cart_items,
         'fullname': customer.CustomerName,
         'total_price': total_price,
         'restaurant': restaurant,
-        'no_available_riders': no_available_riders,  # Pass the flag to the template
+        'no_available_riders': no_available_riders,
+        'message_notification_count': message_count,
     }
     
     # Render the cart page with the context
@@ -1850,12 +1869,10 @@ def order_history(request):
     if not order_details:
         logger.debug("No order details found for customer.")
 
+    message_count = Message.objects.filter(receiver=request.user).count()
+
     # Pass the order details to the template
-    return render(request, 'customer_order_history.html', {'orders': order_details})
-
-
-
-
+    return render(request, 'customer_order_history.html', {'orders': order_details, 'message_notification_count': message_count})
 
 @login_required
 def submit_feedback(request, delivery_id):
