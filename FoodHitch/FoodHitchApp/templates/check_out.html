@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  {% load static %}
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Checkout</title>
+  <link rel="shortcut icon" href="{% static 'images/foodhitch-green.png' %}" type="image/x-icon">
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script type="module" src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.esm.js"></script>
+  <script nomodule src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.js"></script>
+  <script src="https://www.paypal.com/sdk/js?client-id=AZu6FUzyWch2r3UjD_6M8YoKoTVPjo3eXmli2voMiD_25rb2YEbiMur6QWRFpsTcEsG8ZRvY6qrI6h9N&currency=USD&disable-funding=credit"></script>
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAahMs9GBd2ChJopz74dhOjL8a0ZxXo9-k&callback=initializeMap" async defer></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap');
+    * {
+      font-family: 'Poppins', sans-serif;
+    }
+    body {
+      background-color: #eeffd8;
+    }
+    .header {
+      display: flex;
+      align-items: center;
+      margin-left: 24%;
+      
+}
+.header .available-points {
+  margin-left: 60%;
+  font-weight: 700;
+  color: #000;
+  font-size: 16px;
+}
+
+    .header a {
+      margin-right: 2%;
+      text-decoration: none;
+      margin-top: 5%;
+      margin-bottom: 5%;
+}
+
+    .header ion-icon {
+      font-size: 24px;
+      color: #000;
+}
+    .header ion-icon:hover {
+      color: #333333a6;
+    }
+    .page-title {
+      font-size: 20px;
+      color: #333;
+}
+
+    .container {
+      background-color: rgb(255, 255, 255);
+      width: 500px;
+      margin: 0 auto;
+      padding: 30px 50px;
+      border-radius: 10px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+
+    }
+    p {
+      font-weight: 600;
+    }
+    
+    label {
+      display: block;
+      margin-bottom: 5px;
+    }
+    input[type="text"],
+    input[type="number"] {
+      width: 100%;
+      padding: 8px;
+      margin-bottom: 10px;
+      border: 1px solid #000000;
+      box-sizing: border-box;
+      border-radius: 5px;
+    }
+    button {
+      background-color: #009914;
+      color: white;
+      padding: 12px 20px;
+      margin: 10px 0;
+      border: none;
+      cursor: pointer;
+      width: 100%;
+      border-radius: 10px;
+      transition: background-color 0.3s ease, transform 0.3s ease;
+    }
+    button:hover {
+      background-color: #007e11;
+    }
+    .payment-options {
+      margin-top: 20px;
+    }
+    .payment-option {
+      display: flex;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    .payment-option img {
+      height: 100px;
+      width: 100px;
+    }
+    .payment-option input[type="radio"] {
+      margin-right: 10px;
+    }
+    .paypal-button {
+      border-radius: 5px;
+      height: 50px;
+    }
+    .hidden {
+      display: none;
+    }
+
+
+  
+/* Container Styling */
+.container1 {
+    font-family: 'Arial', sans-serif;
+    background-color: #f5f5f5;
+    margin: 0 auto;
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 430px;
+    max-width: 500px;
+    width: 80%;
+    background-color: #fff;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    margin-top: auto;
+}
+
+/* Title */
+h1 {
+    font-size: 1.8rem;
+    color: #333;
+    margin-bottom: 5px;
+}
+
+/* Instructions */
+p {
+    font-size: 1rem;
+    color: #555;
+    margin-bottom: 1rem;
+}
+
+/* QR Code Styling */
+.qr-code {
+    margin: 1.5rem 0;
+    width: 100%;
+    max-width: 200px;
+    height: auto;
+    border-radius: 8px;
+}
+
+/* Form Group */
+.form-group {
+    margin-bottom: 1.5rem;
+    width: 100%;
+    text-align: left;
+}
+
+/* Label */
+.form-group label {
+    display: block;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+    color: #333;
+}
+
+/* File Input */
+.form-group input[type="file"] {
+    width: 100%;
+    padding: 0.8rem;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 1rem;
+    box-sizing: border-box;
+}
+
+/* Focus Effect */
+.form-group input[type="file"]:focus {
+    border-color: #007bff;
+    outline: none;
+}
+
+/* Submit Button */
+.submit-btn {
+    background-color: #007bff;
+    color: #fff;
+    padding: 0.8rem 1.5rem;
+    border: none;
+    border-radius: 5px;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+/* Button Hover Effect */
+.submit-btn:hover {
+    background-color: #0056b3;
+}
+
+/* Error Message */
+.error-message {
+    color: #ff0000;
+    font-size: 1rem;
+    margin-top: 1rem;
+    text-align: center;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .container1 {
+        width: 100%;
+        max-width: 400px;
+        padding: 1rem;
+    }
+
+    h1 {
+        font-size: 1.6rem;
+    }
+
+    .submit-btn {
+        font-size: 1rem;
+        padding: 0.7rem 1.2rem;
+    }
+}
+    </style>
+
+</head>
+<body>
+  <div class="header">
+    <a href="{% url 'view_cart' %}">
+      <ion-icon name="arrow-back-outline"></ion-icon>
+    </a>
+    <h1 class="page-title">Checkout</h1>
+
+    <span class="available-points">Available Points: {{ customer_points }}</span>
+  </div>
+
+  <div class="container">
+    <p>Complete the details to proceed.</p>
+    <form id="checkout-form" method="POST" action="{% url 'place_order' %}" enctype="multipart/form-data">
+      {% csrf_token %}
+      <label for="customer-name">Customer Name:</label>
+      <input type="text" id="customer-name" name="customer-name" value="{{ customer.CustomerName }}" readonly>
+
+      <label for="phone-number">Phone Number:</label>
+      <input type="number" id="phone-number" name="phone-number" value="{{ customer.Phone }}" readonly>
+
+      <label for="city">City:</label>
+      <input type="text" id="city" name="city" required>
+
+      <label for="state">State/Province:</label>
+      <input type="text" id="state" name="state" required>
+
+      <label for="postal-code">Postal Code:</label>
+      <input type="text" id="postal-code" name="postal-code" required>
+
+      <label for="address">Address:</label>
+      <input type="text" id="address" name="address" required>
+
+      <button type="button" id="get-location">Use My Current Location</button>
+
+      <label for="subtotal">Subtotal:</label> 
+      <input type="number" id="subtotal" name="subtotal" value="{{ cart_total }}" readonly>
+
+      <label for="delivery-fee">Delivery Fee:</label>
+      <input type="number" id="delivery-fee" name="delivery-fee" value="{{ delivery_fee }}" readonly>
+
+      <label for="points-used">Use Points:</label>
+      <input type="number" id="points-used" name="points-used" max="{{ customer_points }}" placeholder="Enter points" oninput="updateDeliveryFee()">
+      <button type="button" id="apply-points" onclick="applyRewardPoints()">Apply Points</button>
+
+      <label for="total-payable-amount">Total Payable Amount:</label>
+      <input type="number" id="total-payable-amount" name="total-payable-amount" value="{{ total_amount }}" readonly>
+
+      <div class="payment-options">
+        <div class="payment-option" style="margin-left: 80px;">
+          <label>
+            <input type="radio" id="payment-method-gcash" name="payment-option" value="gcash" onclick="toggleGcashFields()" checked>
+            <img src="{% static 'images/gcash.jpg' %}" alt="Pay with Gcash">
+          </label>
+        </div>
+        <div class="payment-option" style="margin-left: 300px; margin-top: -118px;">
+          <label>
+            <input type="radio" id="payment-method-cod" name="payment-option" value="cod" onclick="toggleGcashFields()">
+            <img src="{% static 'images/CASH.png' %}" alt="Cash On Delivery">
+          </label>
+        </div>
+      </div>
+
+        <div id="gcash_fields">
+          <div class="container1">
+              <h1>Pay with GCash</h1>
+              <p>Scan the QR code below and upload your proof of payment:</p>
+              <img src="{% static 'images/qr.JPG' %}" alt="Gcash QR Code" class="qr-code">
+
+                  <div class="form-group">
+                      <label for="payment-proof">Please upload the Proof of Payment:</label>
+                      <input type="file" id="payment-proof" name="proof_of_payment" accept="image/*" required>    
+      </div>
+    </div>
+      
+      
+      </div>
+      <button type="button" id="confirm-order">Place Order</button>
+
+    </form>
+  </div>
+
+
+
+ <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+  function toggleGcashFields() {
+      const selectedPaymentOption = document.querySelector('input[name="payment-option"]:checked').value;
+      const gcashFields = document.getElementById('gcash_fields');
+      if (selectedPaymentOption === 'gcash') {
+          gcashFields.style.display = 'block';
+      } else {
+          gcashFields.style.display = 'none';
+      }
+  }
+
+  // Trigger the toggle function on page load to set the initial state
+  document.addEventListener('DOMContentLoaded', toggleGcashFields);
+
+  function goBack() {
+    window.history.back(); // Navigate to the previous page
+  }
+
+  // Geolocation and reverse geocoding logic
+  document.getElementById('get-location').addEventListener('click', function () {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(success, error, { enableHighAccuracy: true });
+
+      function success(position) {
+        var latitude = position.coords.latitude;
+        var longitude = position.coords.longitude;
+
+        // Reverse geocoding (Google Maps API)
+        var apiKey = 'AIzaSyAahMs9GBd2ChJopz74dhOjL8a0ZxXo9-k';  // Replace with your API key
+        var url = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${apiKey}`;
+
+        fetch(url)
+          .then(response => response.json())
+          .then(data => {
+            if (data.status === 'OK') {
+              var address = data.results[0].formatted_address;
+              document.getElementById('address').value = address;
+
+              // Calculate and update delivery fee
+              calculateDeliveryFee(latitude, longitude);
+            } else {
+              alert('Unable to retrieve address. Please try again later.');
+            }
+          })
+          .catch(error => console.log('Error with reverse geocoding:', error));
+      }
+
+      function error(err) {
+        switch (err.code) {
+          case err.PERMISSION_DENIED:
+            alert('User denied the request for Geolocation. Please enable location access in your browser.');
+            break;
+          case err.POSITION_UNAVAILABLE:
+            alert('Location information is unavailable. Please check your device settings.');
+            break;
+          case err.TIMEOUT:
+            alert('The request to get user location timed out. Please try again.');
+            break;
+          case err.UNKNOWN_ERROR:
+            alert('An unknown error occurred. Please try again.');
+            break;
+        }
+      }
+    } else {
+      alert('Geolocation is not supported by this browser.');
+    }
+  });
+
+  // Update delivery fee when address is typed
+  document.getElementById('address').addEventListener('input', function() {
+    var address = this.value;
+
+    // Use Geocoding API to get the coordinates for the address
+    if (address.length > 0) {
+      var apiKey = 'AIzaSyAahMs9GBd2ChJopz74dhOjL8a0ZxXo9-k';  // Replace with your API key
+      var url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=${apiKey}`;
+
+      fetch(url)
+        .then(response => response.json())
+        .then(data => {
+          if (data.status === 'OK') {
+            var location = data.results[0].geometry.location;
+            calculateDeliveryFee(location.lat, location.lng);
+          } else {
+            console.error('Unable to find the address');
+          }
+        })
+        .catch(error => console.log('Error with geocoding:', error));
+    }
+  });
+
+  // Function to calculate delivery fee based on address (geolocation)
+  function calculateDeliveryFee(latitude, longitude) {
+    fetch(`/calculate-delivery-fee/?latitude=${latitude}&longitude=${longitude}`)
+      .then(response => response.json())
+      .then(data => {
+        document.getElementById('delivery-fee').value = data.delivery_fee;
+        updateTotalAmount(); // Update total after delivery fee changes
+        // Store the original delivery fee for future reference
+        originalDeliveryFee = data.delivery_fee;
+      })
+      .catch(error => console.log('Error calculating delivery fee:', error));
+  }
+
+  // Function to update total amount (subtotal + delivery fee)
+  function updateTotalAmount() {
+    var subtotal = parseFloat(document.getElementById('subtotal').value);
+    var deliveryFee = parseFloat(document.getElementById('delivery-fee').value);
+    var totalAmount = subtotal + deliveryFee;
+    document.getElementById('total-payable-amount').value = totalAmount.toFixed(2);
+  }
+
+  // Insert logic for reward points deduction (APPLY BUTTON)
+  function applyRewardPoints() {
+    var deliveryFee = parseFloat(document.getElementById('delivery-fee').value);
+    var pointsUsed = parseFloat(document.getElementById('points-used').value) || 0; // Default to 0 if empty
+
+    // Ensure points used do not exceed available points
+    if (pointsUsed > parseFloat("{{ customer_points }}")) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Invalid Points',
+        text: 'The points entered exceed your available points.',
+        confirmButtonText: 'Okay'
+      });
+      document.getElementById('points-used').value = ''; // Clear the input field
+      return; // Stop further calculation if points are invalid
+    }
+
+    // Adjust the delivery fee based on the points entered
+    var adjustedDeliveryFee = Math.max(0, deliveryFee - pointsUsed); // Ensure no negative delivery fee
+    document.getElementById('delivery-fee').value = adjustedDeliveryFee.toFixed(2); // Update delivery fee
+
+    // Update the total payable amount after adjusting the delivery fee
+    updateTotalAmount();
+  }
+
+  // Restore the original delivery fee if points field is cleared
+  document.getElementById('points-used').addEventListener('input', function() {
+    var pointsUsed = this.value;
+    if (pointsUsed === '') {
+      // If points input is cleared, restore the original delivery fee based on the current address
+      if (typeof originalDeliveryFee !== 'undefined') {
+        document.getElementById('delivery-fee').value = originalDeliveryFee.toFixed(2);
+        updateTotalAmount(); // Update the total amount
+      } else {
+        // If originalDeliveryFee is not set, recalculate based on the address
+        var address = document.getElementById('address').value;
+        if (address) {
+          // Call calculateDeliveryFee to restore the correct value
+          var apiKey = 'AIzaSyAahMs9GBd2ChJopz74dhOjL8a0ZxXo9-k';  // Replace with your API key
+          var url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=${apiKey}`;
+          fetch(url)
+            .then(response => response.json())
+            .then(data => {
+              if (data.status === 'OK') {
+                var location = data.results[0].geometry.location;
+                calculateDeliveryFee(location.lat, location.lng);
+              }
+            })
+            .catch(error => console.log('Error calculating delivery fee:', error));
+        }
+      }
+    }
+  });
+
+  updateTotalAmount();
+
+  // Place order logic
+  document.getElementById('confirm-order').addEventListener('click', function () {
+    var selectedPaymentOption = document.querySelector('input[name="payment-option"]:checked').value;
+    const paymentProof = document.getElementById('payment-proof');
+
+    if (selectedPaymentOption === 'gcash') {
+      const paymentProof = document.getElementById('payment-proof');
+
+      if (!paymentProof.value) {
+        // SweetAlert for missing payment proof
+        Swal.fire({
+          icon: 'error',
+          title: 'Missing Payment Proof',
+          text: 'Please upload your GCash payment proof before placing the order.',
+        });
+        return; // Stop further processing if payment proof is missing
+      }
+
+      Swal.fire({
+        title: 'Confirm Gcash Payment',
+        text: 'Are you sure you want to place your order with GCash?',
+        icon: 'info',
+        showCancelButton: true,
+        confirmButtonText: 'Yes, place order',
+        cancelButtonText: 'No, go back'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          // Manually trigger form submission
+          document.getElementById('checkout-form').submit();
+        }
+      });
+    }
+
+    else if (selectedPaymentOption === 'cod') {
+      // SweetAlert for COD confirmation
+      Swal.fire({
+        title: 'Confirm Cash on Delivery',
+        text: 'Are you sure you want to place your order with Cash on Delivery?',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Yes, place order',
+        cancelButtonText: 'No, go back'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          document.getElementById('checkout-form').submit();
+        } else if (result.isDenied || result.isDismissed) {
+          window.location.href = "{% url 'customer_home' %}";
+        }
+      });
+    }
+  });
+
+  // Initialize the Google Places Autocomplete
+  function initAutocomplete() {
+    var input = document.getElementById('autocomplete');
+
+    // Create autocomplete object linked to the input field
+    var autocomplete = new google.maps.places.Autocomplete(input, {
+      // Restricting autocomplete to address results only
+      types: ['address'], // Suggest only addresses
+      componentRestrictions: { country: 'ph' } // Restrict to the Philippines
+    });
+
+    // Specify what happens when a place is selected
+    autocomplete.addListener('place_changed', function () {
+      var place = autocomplete.getPlace();
+      if (!place.geometry) {
+        // User did not select a valid place
+        alert("Please select a valid address from the list.");
+        return;
+      }
+
+      // If needed, you can extract further details from the selected place
+      console.log('Full Address: ', place.formatted_address);
+    });
+  }
+
+  // Load autocomplete when the page is loaded
+  window.onload = initAutocomplete;
+
+</script>
+
+  
+</body>
+</html>

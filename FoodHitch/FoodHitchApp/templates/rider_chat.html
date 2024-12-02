@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    {% load static %}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="shortcut icon" href="{% static 'images/foodhitch-green.png' %}" type="image/x-icon">
+    <title>FoodHitch Delivery</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #f5f5f5; /* Dirty white */
+            color: #000000; /* Black text */
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .messenger {
+            display: flex;
+            width: 100%;
+        }
+
+        .sidebar {
+            width: 25%;
+            background-color: #f0f0f0; /* Light dirty white */
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid #000000;
+        }
+
+        .search-bar {
+            padding: 10px;
+            border-bottom: 1px solid #000000;
+        }
+
+        .search-bar input {
+            width: 100%;
+            padding: 8px;
+            background-color: #d3d3d3; /* Light gray */
+            border: none;
+            border-radius: 15px;
+            color: #000000; /* Black text */
+        }
+
+        .chat-list {
+            overflow-y: auto;
+            flex-grow: 1;
+        }
+
+        .chat-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            cursor: pointer;
+        }
+
+        .chat-item img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+
+        .chat-item .chat-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chat-item .name {
+            font-weight: bold;
+            color: #000000; /* Black text */
+        }
+
+        .chat-item .last-message {
+            font-size: 0.9em;
+            color: #5f5f5f; /* Dark gray */
+        }
+
+        .chat-item.active {
+            background-color: #d3d3d3; /* Light gray */
+        }
+
+        .chat-window {
+            width: 75%;
+            background-color: #f0f0f0; /* Light dirty white */
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chat-header {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            border-bottom: 1px solid #000000;
+        }
+
+        .chat-header img {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            margin-right: 15px;
+        }
+
+        .chat-header .chat-title h3 {
+            margin: 0;
+            font-size: 1.1em;
+            color: #000000; /* Black text */
+        }
+
+        .chat-header .chat-actions button {
+            background: none;
+            border: none;
+            color: #5f5f5f; /* Dark gray */
+            font-size: 1.5em;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+
+        .chat-content {
+            flex-grow: 1;
+            padding: 15px;
+            overflow-y: auto;
+            background-image: url('background.jpg');
+            background-size: cover;
+            background-position: center;
+        }
+
+        .message {
+            padding: 10px;
+            border-radius: 15px;
+            margin-bottom: 25px;
+            position: relative;
+            max-width: 70%; /* Optional: Limits how wide the message can grow */
+            word-wrap: break-word; /* Wraps text if too long */
+            line-height: 1.5; /* For readability */
+            width: auto; /* Ensures width adjusts based on content */
+            display: block; /* Default display property to keep design intact */
+        }
+
+        .message.left {
+            background-color: #d3d3d3; /* Light gray */
+            color: #000000; /* Black text */
+            align-self: flex-start;
+        }
+
+        .message.right {
+            background-color: #218838; /* Lighter green */
+            color: #ffffff;
+            align-self: self-end;
+            margin-left: 50%;
+        }
+        .message-time {
+            font-size: 0.8em;
+            color: #5f5f5f; /* Dark gray */
+            position: absolute;
+            bottom: -20px; /* Adjust based on your layout */
+            right: 10px;
+        }
+        .message .dots {
+            position: absolute;
+            top: 50%;
+            right: 10px;
+            transform: translateY(-50%);
+            font-size: 1.5em;
+            cursor: pointer;
+            color: #5f5f5f; /* Dark gray */
+        }
+
+        .chat-input {
+            display: flex;
+            padding: 10px;
+            border-top: 1px solid #bdbdbd;
+        }
+
+        .chat-input input {
+            flex-grow: 1;
+            padding: 10px;
+            border-radius: 20px;
+            background-color: #d3d3d3; /* Light gray */
+            border: none;
+            color: #000000; /* Black text */
+            margin-right: 10px;
+        }
+
+        .chat-input button {
+            background-color: #218838; /* Lighter green */
+            border: none;
+            color: #ffffff; 
+            font-weight: bold;  
+            font-size: 1em;
+            padding: 8px 16px; 
+            border-radius: 4px; 
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .chat-input button:hover {
+            background-color: #1e7e34; /* Slightly darker green */
+        }
+
+        .options-container {
+            position: relative;
+            margin-left: auto;
+        }
+
+        .three-dots {
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #d3d3d3; /* Light gray */
+            border-radius: 50%;
+            color: #5f5f5f; /* Dark gray */
+            font-size: 1.5em;
+            cursor: pointer;
+        }
+
+        .options-menu {
+            display: none;
+            position: absolute;
+            top: 40px;
+            right: 0;
+            background-color: #f0f0f0; /* Light dirty white */
+            border: 1px solid #bdbdbd;
+            border-radius: 8px;
+            padding: 10px;
+            color: #000000; /* Black text */
+        }
+
+        .options-menu button {
+            background: none;
+            border: none;
+            color: #000000; /* Black text */
+            cursor: pointer;
+            font-size: 0.9em;
+            padding: 5px;
+            width: 100%;
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+    <div class="messenger">
+        <div class="sidebar">
+            <div class="chat-list">
+                {% for customer, profile in customer_profiles.items %}
+                    <div class="chat-item active">
+                        <!-- Use customer profile picture -->
+                        <img src="{{ profile.profile_picture }}" alt="Profile">
+                        <div class="chat-info">
+                            <!-- Use customer name -->
+                            <span class="name">{{ profile.name }}</span>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    
+        <!-- Main Chat Window -->
+        <div class="chat-window">
+            <div class="chat-header">
+                {% for customer, profile in customer_profiles.items %}
+                    <!-- Use customer profile picture -->
+                    <img src="{{ profile.profile_picture }}" alt="Profile">
+                    <div class="chat-title">
+                        <!-- Use customer name -->
+                        <span class="name">{{ profile.name }}</span>
+                    </div>
+                {% endfor %}
+            </div>
+            <div class="chat-content" id="chatContent">
+                {% for message in messages %}
+                    <div class="message {% if message.sender == user %}right{% else %}left{% endif %}">
+                        <p>{{ message.message }}</p>
+                        <span class="message-time">{{ message.timestamp|date:"H:i A" }}</span> <!-- Format the timestamp -->
+                    </div>
+                {% endfor %}
+            </div>
+            <div class="chat-input">
+                <input type="text" id="messageInput" placeholder="Message...">
+                <button id="sendButton">Send</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const sendButton = document.getElementById('sendButton');
+            const messageInput = document.getElementById('messageInput');
+            const chatContent = document.getElementById('chatContent');
+    
+            // Send message when the "Send" button is clicked
+            sendButton.addEventListener('click', function(event) {
+                event.preventDefault();  // Prevent form submission
+                sendMessage();
+            });
+    
+            // Send message when the Enter key is pressed
+            messageInput.addEventListener('keypress', function(event) {
+                if (event.key === 'Enter') {
+                    event.preventDefault();  // Prevent form submission on Enter key press
+                    sendMessage();
+                }
+            });
+    
+            // Function to send the message
+            function sendMessage() {
+                const message = messageInput.value.trim();
+                if (message !== '') {
+                    // Send AJAX request to the server to save the message
+                    fetch('{% url "send_message" %}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': '{{ csrf_token }}',
+                        },
+                        body: JSON.stringify({
+                            message: message,
+                            rider_id: '{{ rider.RiderID }}'
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        // Append new message to chat window
+                        const newMessage = document.createElement('div');
+                        newMessage.classList.add('message', 'right');
+                        newMessage.innerHTML = `<p>${data.message}</p>`;
+    
+                        chatContent.appendChild(newMessage);
+                        chatContent.scrollTop = chatContent.scrollHeight;
+    
+                        // Clear the input field
+                        messageInput.value = '';
+                    })
+                    .catch(error => console.error('Error:', error));
+                }
+            }
+        });
+    </script>
+</body>
