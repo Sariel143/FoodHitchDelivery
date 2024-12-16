@@ -106,31 +106,62 @@ body {
 
 }
 
-/* Header Styles */
+/* Hide sidebar by default for smaller screens */
+.sidebar.active {
+  transform: translateX(0);
+}
+
+@media (max-width: 768px) {
+  .sidebar {
+    transform: translateX(-100%);
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 1000;
+  }
+
+  .menu-toggle {
+    display: block;
+    cursor: pointer;
+    font-size: 28px;
+    color: var(--blackColor);
+  }
+}
+
+.menu-toggle {
+  display: none;
+  font-size: 30px;
+  color: #005704;
+}
+
+@media (max-width: 768px) {
+  .menu-toggle {
+    display: block;
+  }
+}
+
+/* Header */
 .header {
   display: flex;
   align-items: center;
   position: fixed;
   top: 0;
-  left: 250.4px; /* Adjust to accommodate the sidebar */
+  left: 250px;
   right: 0;
   background: #ffffff;
   padding: 10px 20px;
   z-index: 1000;
-  height: 80px; /* Adjust height as needed */
-  justify-content: space-between; /* Distribute space between search bar and icons */
-  box-shadow: 0 2px 2.5px rgba(0, 0, 0, 0.3); /* Adjust the shadow properties as needed */
-
+  height: 80px;
+  justify-content: space-between;
+  box-shadow: 0 2px 2.5px rgba(0, 0, 0, 0.3);
 }
 
 .header .search-bar {
   flex: 1;
   max-width: 600px;
-  margin: 0 auto; /* Center the search bar */
+  margin: 0 auto;
   border-radius: 12px;
   background-color: #fff;
-
-  
 }
 
 .header .search-bar input {
@@ -155,8 +186,12 @@ body {
 }
 
 .header .icons ion-icon:hover {
-  color: var(--secondaryColor); /* Change color on hover */
+  color: var(--secondaryColor);
 }
+
+
+
+
 
 /* Styles specific to admin_restaurant.html */
 .content-container {
@@ -424,6 +459,8 @@ margin-right: 5px; /* Space between the icon and text */
   display: flex;
   justify-content: space-between;
   margin-bottom: 30px;
+  background: linear-gradient(135deg, #98FF98, #D4FFD4, #43C563);
+
 }
 
 .admin-home-card {
@@ -436,6 +473,7 @@ margin-right: 5px; /* Space between the icon and text */
   text-align: center;
   margin: 10px;
   margin-top: 9%;
+  margin-bottom: 5%;
 }
 
 .admin-home-card h3{
@@ -492,7 +530,9 @@ margin-right: 5px; /* Space between the icon and text */
 
 .chart-toggle-button:hover {
   background-color: #005704e5; /* Darker shade on hover */
-}
+} 
+
+
 
 .image-upload-section {
     border: 2px dashed #ddd;

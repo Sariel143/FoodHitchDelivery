@@ -10,9 +10,10 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/ionicons/5.6.3/css/ionicons.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ionicons@5.5.2/dist/ionicons/ionicons.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 </head>
 <body>
-    <div class="sidebar">
+    <div class="sidebar" id="sidebar">
         <div class="sidebar-header">
             <a href="{% url 'admin_base' %}">
                 <img src="{% static 'images/nobgwhitelogo.png' %}" alt="FoodHitch Delivery Logo" class="logo">
@@ -49,6 +50,9 @@
     </div>
     
     <header class="header">
+        <div class="menu-toggle" id="menu-toggle">
+            <ion-icon name="menu-outline"></ion-icon>
+        </div>
         <div class="search-bar">
             <input type="text" id="search-input" placeholder="Search...">
         </div>
@@ -62,9 +66,7 @@
         </div>
     </header>
 
-
     {% block content %}{% endblock %}
-    
     
     <script src="{% static 'js/customer_countcart.js' %}"></script>
     <script type="module" src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.esm.js"></script>
@@ -73,8 +75,14 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            const menuToggle = document.getElementById('menu-toggle');
+            const sidebar = document.getElementById('sidebar');
+
+            menuToggle.addEventListener('click', function() {
+                sidebar.classList.toggle('active');
+            });
+
             const searchInput = document.getElementById('search-input');
-            
             searchInput.addEventListener('keyup', function(event) {
                 if (event.key === 'Enter') {
                     const query = encodeURIComponent(searchInput.value);

@@ -58,7 +58,7 @@ from .views import (
     place_order, 
     get_rider_location,
     view_riders,
-    delete_rider,
+    delete_rider,admin_register,
     update_delivery_status,
     rider_earnings,toggle_menu_availability,
     rider_notifications, notify_rider_view, message_notification_count,
@@ -82,6 +82,7 @@ urlpatterns = [
     path('archive-delivery/<int:delivery_id>/', archive_delivery, name='archive_delivery'),
     path('archived-deliveries/', rider_archived_deliveries, name='rider_archived_deliveries'),
     path('message-notification-count/', message_notification_count, name='message_notification_count'),
+    path('admin_register/', admin_register, name='admin_register'),
 
     
 

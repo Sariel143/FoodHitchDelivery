@@ -154,4 +154,67 @@ button:hover {
 .horizontal-links a:hover {
     color: rgb(63, 63, 63);
 }
+@media (max-width: 768px) {
+    .container {
+        width: 90%; /* Adjust width to fit smaller screens */
+        margin-left: auto;
+        margin-right: auto;
+        height: auto; /* Adjust height dynamically */
+        border-radius: 20px; /* Slightly softer corners for smaller screens */
+    }
 
+    .logo img {
+        width: 100%; /* Make the image responsive */
+        height: auto; /* Maintain aspect ratio */
+        border-radius: 20px 20px 0 0; /* Adjust corner radius */
+    }
+
+    .login-form {
+        padding: 20px; /* Reduce padding for smaller screens */
+    }
+
+    .login-form h2 {
+        font-size: 20px; /* Smaller font for headings */
+        margin-top: 0; /* Adjust margins */
+    }
+
+    input[type="text"],
+    input[type="password"] {
+        width: 100%; /* Full width inputs */
+        font-size: 1rem; /* Adjust font size for better readability */
+    }
+
+    button {
+        font-size: 16px; /* Smaller button text */
+        padding: 8px; /* Adjust padding */
+    }
+
+    .sign-link p {
+        font-size: 0.9rem; /* Adjust font size */
+    }
+}
+
+/* For phones (small screens) */
+/* For smaller screens, ensure the logo is in the top-left corner */
+@media (max-width: 480px) {
+    .logo {
+        position: absolute; /* Ensure the logo is positioned relative to the viewport */
+        top: 0; /* Align to the very top */
+        left: 0; /* Align to the very left */
+        padding: 10px; /* Optional: Add some padding for spacing */
+        z-index: 1000; /* Ensure the logo stays above other elements */
+    }
+
+    .logo img {
+        width: 80px; /* Adjust size for small screens */
+        height: auto; /* Maintain aspect ratio */
+        border-radius: 50%; /* No rounded corners for a cleaner look */
+        box-shadow: none; /* Remove shadow for simplicity on small screens */
+        margin-left: 200%;
+    }
+    input[type="text"],
+    input[type="password"] {
+        width: 90%; /* Full width inputs */
+        font-size: 1rem; /* Adjust font size for better readability */
+    }
+}

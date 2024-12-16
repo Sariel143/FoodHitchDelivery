@@ -49,6 +49,9 @@ body {
 }
 
 .login-button {
+    position: absolute;
+    top: 10px;
+    right: 20px;
     color: #fff;
     padding: 7px 20px;
     border: none;
@@ -58,7 +61,6 @@ body {
     display: inline-block;
     background-color: #009914;
     transition: background-color 0.3s ease, transform 0.3s ease;
-
 }
 
 .login-button:hover {
@@ -74,9 +76,13 @@ body {
 
 #background-video {
     position: absolute;
-    width: 100vw;
-    height: 75vh;
-    object-fit: cover;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%); /* Center the video */
+    width: auto; /* Ensure width scales dynamically */
+    height: auto; /* Maintain original aspect ratio */
+    min-width: 100%; /* Ensure video stretches to fill container */
+    min-height: 100%; /* Ensure coverage even with reduced height */
 }
 
 .quote1 {
@@ -280,4 +286,69 @@ h1 {
 .gmail-icon img {
     width: 24px; 
     height: auto; 
+}
+/* Media Queries */
+@media screen and (max-width: 768px) {
+    .navbar .container {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .nav-links {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .video-container {
+        height: 50vh;
+    }
+
+    .page2 h1, .page3 h1, .page4 h1 {
+        font-size: 1.5em;
+    }
+
+    .page3, .page4 {
+        flex-direction: column;
+    }
+
+    .cta-button, .button2 {
+        font-size: 16px;
+    }
+
+    .page3 img.logo, .page4 img.logo {
+        max-width: 90%;
+    }
+    .login-button {
+        top: 15px;
+        font-size: 14px;
+    }
+}
+
+@media screen and (max-width: 480px) {
+    .navbar {
+        padding: 5px 10px;
+    }
+
+    .video-container {
+        height: 40vh;
+    }
+
+    .page2 h1, .page3 h1, .page4 h1 {
+        font-size: 1.2em;
+    }
+
+    .cta-button, .button2 {
+        font-size: 14px;
+        padding: 8px 15px;
+    }
+
+    .page3 img.logo, .page4 img.logo {
+        max-width: 100%;
+    }
+    .login-button {
+        top: 30px;
+        margin-right: 10px;
+        font-size: 12px;
+        padding: 5px 15px;
+    }
 }

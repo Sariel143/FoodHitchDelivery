@@ -118,13 +118,13 @@ def owners_register(request):
         if form.is_valid():
             # Get the cleaned data
             username = form.cleaned_data.get('username')  # Make sure this matches the field name in the form
-            
+
             user = User.objects.create_user(
                 username=username,
                 email=form.cleaned_data.get('email'),
                 password=form.cleaned_data.get('password1')  # Assuming this is the correct field
             )
-            
+
             owner = form.save(commit=False)
             owner.user = user
             owner.save()
@@ -146,7 +146,7 @@ def admin_register(request):
             return redirect('customer_login')  # Replace with the actual login URL
     else:
         form = AdminRegisterForm()
-    
+
     return render(request, 'admin_register.html', {'form': form})
 
 def owner_base(request):
@@ -176,7 +176,7 @@ def owner_add_restaurant(request):
             if data['status'] == 'OK':
                 restaurant.Latitude = data['results'][0]['geometry']['location']['lat']
                 restaurant.Longitude = data['results'][0]['geometry']['location']['lng']
-            
+
             restaurant.save()
             return JsonResponse({'status': 'success', 'message': 'Restaurant added successfully!'})
         else:
@@ -190,10 +190,10 @@ def owner_add_restaurant(request):
 def owner_view_restaurant(request):
     # Get the StoreOwner instance for the logged-in user
     store_owner = get_object_or_404(StoreOwner, user=request.user)
-    
+
     # Get the restaurants that belong to the logged-in StoreOwner
     restaurants = Restaurant.objects.filter(OwnerID=store_owner)
-    
+
     # Include store_owner in the context to access the picture in the template
     context = {
         'restaurants': restaurants,
@@ -211,7 +211,7 @@ def delete_restaurant(request, restaurant_id):
     # Check if the request is an AJAX request
     if request.headers.get('x-requested-with') == 'XMLHttpRequest':
         return JsonResponse({'success': True, 'message': 'Restaurant deleted successfully!'})
-    
+
     # Flash a success message and redirect to the restaurant view page
     messages.success(request, 'Restaurant deleted successfully!')
     return redirect('owner_view_restaurant')
@@ -245,10 +245,10 @@ def owner_edit_restaurant(request, restaurant_id):
             else:
                 messages.error(request, 'You do not have a valid StoreOwner account.')
                 return redirect('owner_view_restaurant')
-            
+
             # Keep the existing status unchanged
             # No need to modify restaurant.Status here since we're only editing name and image
-            
+
             # Save the restaurant instance
             restaurant.save()
 
@@ -368,7 +368,7 @@ def owner_delete_menu(request, restaurant_id, food_id):
 def owner_restaurants(request, owner_id):
     owner = get_object_or_404(StoreOwner, OwnerID=owner_id)
     restaurants = Restaurant.objects.filter(OwnerID=owner, Status='approved')  # Get all restaurants by this owner
-    
+
     notifications = request.session.get('notifications', get_notifications())
     notification_count = len(notifications)
 
@@ -400,7 +400,7 @@ def manage_business_request(request, restaurant_id):
 
     if request.method == 'POST':
         action = request.POST.get('action')
-        
+
         if action == 'approve':
             restaurant.Status = 'approved'
             restaurant.save()
@@ -413,7 +413,7 @@ def manage_business_request(request, restaurant_id):
                     [restaurant.OwnerID.Email],
                     fail_silently=False,
                 )
-            
+
         elif action == 'decline':
             restaurant.Status = 'rejected'
             restaurant.save()
@@ -426,7 +426,7 @@ def manage_business_request(request, restaurant_id):
                     [restaurant.OwnerID.Email],
                     fail_silently=False,
                 )
-        
+
         return redirect('partner_request_list')
 
     return render(request, 'admin_request.html', {
@@ -436,7 +436,7 @@ def manage_business_request(request, restaurant_id):
 @never_cache
 @login_required
 def admin_rider_table(request):
-    
+
     riders = Rider.objects.all()
     notifications = request.session.get('notifications', get_notifications())
     notification_count = len(notifications)
@@ -454,7 +454,7 @@ def manage_rider_application(request, RiderID):
 
     if request.method == 'POST':
         action = request.POST.get('action')
-        
+
         if rider.Status == 'declined':
             messages.error(request, "You cannot approve a rider whose application has been declined.")
             return redirect('admin_home')
@@ -496,7 +496,7 @@ def customer_login(request):
 
             if user is not None:
                 login(request, user)
-                
+
                 # Check if the user is a superuser/admin
                 if user.is_superuser:
                     return JsonResponse({"success": True, "redirect_url": reverse('admin_home')})
@@ -538,12 +538,12 @@ def handle_customer_login(customer, request):
     """Handle login flow for customers."""
     if request.COOKIES.get(f'verified_{customer.CustomerID}'):
         return JsonResponse({"success": True, "redirect_url": reverse('customer_home')})
-    
+
     otp = generate_otp()
     request.session['otp'] = otp
     request.session['customer_id'] = customer.CustomerID
     send_mail('Your OTP Code', f'Your OTP code is {otp}', settings.DEFAULT_FROM_EMAIL, [customer.user.email])
-    
+
     return JsonResponse({"success": True, "message": "OTP sent to your email", "redirect_url": reverse('otp_verification')})
 
 def handle_rider_login(rider, request):
@@ -596,7 +596,7 @@ def otp_verification(request):
                     response = redirect('customer_home')  # Redirect to customer home after OTP verification
                     response.set_cookie(f'verified_{customer.CustomerID}', True, max_age=2*24*60*60)  # 2 days
                     return response
-                
+
                 elif rider_id:
                     rider = Rider.objects.get(RiderID=rider_id)
                     user = rider.user
@@ -605,7 +605,7 @@ def otp_verification(request):
                     response = redirect('rider_home')  # Redirect to rider home after OTP verification
                     response.set_cookie(f'verified_{rider.RiderID}', True, max_age=2*24*60*60)  # 2 days
                     return response
-                
+
                 elif owner_id:
                     storeowner = StoreOwner.objects.get(OwnerID=owner_id)
                     user = storeowner.user
@@ -627,6 +627,16 @@ def customer_base(request):
 
 @login_required
 def customer_track_order(request):
+
+    customer_profile = get_object_or_404(Customer, user=request.user)
+
+    rider_id = None
+    try:
+        active_delivery = Delivery.objects.filter(CustomerID=customer_profile).exclude(DeliveryStatus='Delivered').first()
+        if active_delivery:
+            rider_id = active_delivery.RiderID.RiderID
+    except Delivery.DoesNotExist:
+        rider_id = None
     # Get the logged-in user
     user = request.user
 
@@ -663,7 +673,7 @@ def customer_track_order(request):
     # Log the payment method for each delivery and get the restaurant's menu
     for delivery in deliveries:
         order = delivery.OrderID  # Assuming 'OrderID' is a foreign key to the Order model
-        
+
         # Log the order information
         if hasattr(order, 'id'):
             order_id = order.id  # Default primary key
@@ -681,35 +691,58 @@ def customer_track_order(request):
         # Add menu items to the delivery object
         delivery.menu_items = menu_items
 
-        message_count = Message.objects.filter(receiver=request.user).count()
+    # Ensure 'message_count' is initialized before being used
+    message_count = Message.objects.filter(sender=request.user).count()
+
 
     # Pass the filtered deliveries and menu items to the template
-    return render(request, 'customer_track_order.html', {'deliveries': deliveries, 'message_notification_count': message_count})
+    return render(request, 'customer_track_order.html', {'deliveries': deliveries, 'message_notification_count': message_count, 'rider_id': rider_id})
+
 
 
 
 logger = logging.getLogger(__name__)
 
-def get_rider_location(request, RiderID):
+def rider_location(request, rider_id):
     try:
-        rider = Rider.objects.get(id=RiderID)  # Assuming Rider is your model
-        location_data = {
-            'latitude': rider.current_latitude,
-            'longitude': rider.current_longitude,
+        rider = Rider.objects.get(RiderID=rider_id)
+        location = {
+            'latitude': rider.latitude,
+            'longitude': rider.longitude
         }
-        return JsonResponse(location_data)
+        data = {
+            'success': True,
+            'location': location
+        }
     except Rider.DoesNotExist:
-        return JsonResponse({'error': 'Rider not found'}, status=404)
+        data = {
+            'success': False,
+            'message': 'Rider not found'
+        }
+
+    return JsonResponse(data)
+
 
 @login_required
 def customer_reward_points(request):
+    customer_profile = Customer.objects.get(user=request.user)
     customer = Customer.objects.get(user=request.user)
     points = customer.Points
-    message_count = Message.objects.filter(receiver=request.user).count()
+    message_count = Message.objects.filter(sender=request.user).count()
+
+    rider_id = None
+    try:
+        active_delivery = Delivery.objects.filter(CustomerID=customer_profile).exclude(DeliveryStatus='Delivered').first()
+        if active_delivery:
+            rider_id = active_delivery.RiderID.RiderID
+    except Delivery.DoesNotExist:
+        rider_id = None
+
     context = {
         'points': points,
         'customer_name': customer.CustomerName,
         'message_notification_count': message_count,
+        'rider_id': rider_id
     }
     return render(request, 'customer_rewards_points.html', context)
 
@@ -742,18 +775,19 @@ def rider_home(request):
 
 
 
+
 @login_required
 def rider_earnings(request):
     rider = Rider.objects.get(user=request.user)
     rider_notifications = get_rider_notifications(rider.RiderID)
     notification_count = len(rider_notifications)
-    message_count = Message.objects.filter(receiver=request.user).count()
-    
+    message_count = Message.objects.filter(sender=request.user, receiver=rider.user).count()
+
     # Get the Rider instance linked to the logged-in use
 
     # Get the selected date
     selected_date = request.GET.get('date', None)
-    
+
     # Initialize earnings variables
     daily_earnings = weekly_earnings = monthly_earnings = 0
     daily_earnings_records = []
@@ -778,8 +812,8 @@ def rider_earnings(request):
 
     # Handle Monthly Earnings
     start_of_month = selected_date.replace(day=1)
-    next_month = (start_of_month.replace(month=start_of_month.month % 12 + 1, day=1) 
-                  if start_of_month.month < 12 else 
+    next_month = (start_of_month.replace(month=start_of_month.month % 12 + 1, day=1)
+                  if start_of_month.month < 12 else
                   (start_of_month.replace(year=start_of_month.year + 1, month=1, day=1)))
     end_of_month = next_month - timedelta(days=1)
     monthly_earnings_records = Delivery.objects.filter(RiderID=rider, Date__date__range=[start_of_month, end_of_month])
@@ -837,7 +871,7 @@ def update_rider_profile(request):
     # Retrieve notifications from the session
     rider = Rider.objects.get(user=request.user)
     rider_notifications = get_rider_notifications(rider.RiderID)
-    
+
     notification_count = len(rider_notifications)
 
     rider_profile = get_object_or_404(Rider, user=request.user)
@@ -872,7 +906,7 @@ def update_rider_profile(request):
         }
         form = RiderUpdateForm(instance=rider_profile, initial=initial_data)
     success = 'success' in request.GET
-    message_count = Message.objects.filter(receiver=request.user).count()
+    message_count = Message.objects.filter(sender=request.user, receiver=rider.user).count()
     # Pass the notification_count to the template
     return render(request, 'rider_profile_update.html', {
         'form': form,
@@ -941,27 +975,37 @@ def update_store_owner_profile(request):
     })
 
 
-@login_required
+# In your views.py
 def customer_home(request):
     # Fetch all restaurants
     restaurants = Restaurant.objects.filter(Status='approved')
 
-    # Fetch the customer profile using the User object
     try:
         customer_profile = Customer.objects.get(user=request.user)
         fullname = customer_profile.CustomerName
     except Customer.DoesNotExist:
         fullname = "Unknown"
 
-    message_count = Message.objects.filter(receiver=request.user).count()
-    # Prepare context with necessary data
+    # Assuming you want to show the rider for the most recent delivery or similar
+    rider_id = None  # Or fetch dynamically from active orders or some other logic
+    try:
+        active_delivery = Delivery.objects.filter(CustomerID=customer_profile).exclude(DeliveryStatus='Delivered').first()
+        if active_delivery:
+            rider_id = active_delivery.RiderID.RiderID
+    except Delivery.DoesNotExist:
+        rider_id = None
+
+    message_count = Message.objects.filter(sender=request.user).count()
+
     context = {
         'restaurants': restaurants,
         'fullname': fullname,
         'message_notification_count': message_count,
+        'rider_id': rider_id  # Add the rider_id to the context
     }
-    
+
     return render(request, 'customer_home.html', context)
+
 
 @login_required
 def view_menu(request, restaurant_id):
@@ -980,9 +1024,9 @@ def view_menu(request, restaurant_id):
     # Add favorite status to each menu item
     for item in menu_items:
         item.is_favorite = item.FoodID in favorites
-    
+
     message_count = Message.objects.filter(receiver=request.user).count()
-    
+
     # Render the menu with only available items
     return render(request, 'customer_menu.html', {
         'restaurant': restaurant,
@@ -996,14 +1040,14 @@ def toggle_favorite(request):
     data = json.loads(request.body)
     food_id = data.get('food_id')
     status = data.get('status')
-    
+
     if not food_id:
         return JsonResponse({'success': False, 'message': 'No food ID provided.'})
 
     try:
         menu_item = Menu.objects.get(FoodID=food_id)
         customer = Customer.objects.get(user=request.user)
-        
+
         if status == 'add':
             favorite, created = Favorite.objects.get_or_create(
                 CustomerID=customer,
@@ -1018,26 +1062,26 @@ def toggle_favorite(request):
             return JsonResponse({'success': False, 'message': 'Invalid status'})
 
         return JsonResponse({'success': True, 'is_favorite': is_favorite})
-    
+
     except Menu.DoesNotExist:
         return JsonResponse({'success': False, 'message': 'Menu item not found.'})
-    
+
 @login_required
 def remove_favorite(request, food_id):
     if request.method == "POST" and request.headers.get('X-Requested-With') == 'XMLHttpRequest':
         try:
             # Fetch the favorite item for the current customer (adjust the field to CustomerID)
             favorite = get_object_or_404(Favorite, CustomerID=request.user.customer, FoodID=food_id)
-            
+
             # Delete the favorite item
             favorite.delete()
 
             # Return a JSON response indicating success
             return JsonResponse({'success': True})
-        
+
         except Favorite.DoesNotExist:
             return JsonResponse({'success': False, 'error': 'Favorite item not found'}, status=404)
-    
+
     # If it's not an AJAX request, redirect to the favorites page (fallback)
     return redirect('view_favorites')
 
@@ -1053,11 +1097,11 @@ def add_to_cart(request):
     try:
         item = Menu.objects.get(FoodID=food_id)
         cart_item, created = CartItem.objects.get_or_create(CustomerID=request.user.customer, FoodID=item)
-        
+
         if not created:
             cart_item.Quantity += 1
             cart_item.save()  # Save the updated quantity
-        
+
         # Return the updated cart count
         cart_count = CartItem.objects.filter(CustomerID=request.user.customer).count()
         return JsonResponse({'success': True, 'cart_count': cart_count})
@@ -1071,23 +1115,21 @@ def get_cart_count(request):
     try:
         # Get the customer associated with the current user
         customer = Customer.objects.get(user=request.user)
-        
+
         # Count the cart items for that customer
         cart_count = CartItem.objects.filter(CustomerID=customer).count()
-        
+
         return JsonResponse({'success': True, 'cart_count': cart_count})
     except Customer.DoesNotExist:
         return JsonResponse({'success': False, 'message': 'Customer not found.'})
 
 @login_required
 def view_cart(request):
-    # Retrieve the logged-in customer's profile
     try:
+        # Get the customer associated with the logged-in user
         customer = Customer.objects.get(user=request.user)
     except Customer.DoesNotExist:
-        # Handle the case where the Customer profile doesn't exist
-        # You might want to create a new customer or redirect them elsewhere
-        return redirect('create_customer_profile')  # Adjust as necessary
+        return redirect('create_customer_profile')  # Redirect to profile creation if customer doesn't exist
 
     # Fetch all cart items related to the current customer
     cart_items = CartItem.objects.filter(CustomerID=customer)
@@ -1095,52 +1137,70 @@ def view_cart(request):
 
     # Calculate total prices for each cart item
     for item in cart_items:
-        item_total_price = item.FoodID.Price * item.Quantity  # Calculate item total
-        total_price += item_total_price  # Accumulate total price
-        item.item_total_price = item_total_price  # Add total price for item to pass to template
+        item_total_price = item.FoodID.Price * item.Quantity
+        total_price += item_total_price
+        item.item_total_price = item_total_price
 
-    # Determine if the cart has items and if all items are from the same restaurant
+    # Check if the cart items are from the same restaurant
     restaurant = None
     if cart_items.exists():
         first_restaurant = cart_items[0].FoodID.restaurant
         all_same_restaurant = all(item.FoodID.restaurant == first_restaurant for item in cart_items)
-        
+
         if all_same_restaurant:
             restaurant = first_restaurant
-    
-    # Check if there are available riders
-    available_riders = Rider.objects.filter(Availability='available')
-    no_available_riders = available_riders.count() == 0  # Flag to indicate if no riders are available
 
+    # Check for available riders
+    available_riders = Rider.objects.filter(Availability='available')
+
+    # Get riders who are linked to orders with a status of 'Pending' or 'On Transit'
+    riders_involved_in_pending_orders = Rider.objects.filter(
+        delivery__DeliveryStatus__in=['Pending', 'On Transit']
+    ).distinct()
+
+    # If all available riders are already involved in pending orders
+    no_available_riders = available_riders.count() == 0 or available_riders.count() == riders_involved_in_pending_orders.count()
+
+    # Check if the customer has any order with a 'Pending' or 'On Transit' status
+    pending_or_on_transit_orders = Order.objects.filter(
+        CustomerID=customer,
+        delivery__DeliveryStatus__in=['Pending', 'On Transit']
+    )
+
+    # Count unread messages for the current user
     message_count = Message.objects.filter(receiver=request.user).count()
-    # Pass the required data to the template
+
+    # Pass the data to the template
     context = {
         'cart_items': cart_items,
         'fullname': customer.CustomerName,
         'total_price': total_price,
         'restaurant': restaurant,
-        'no_available_riders': no_available_riders,
+        'no_available_riders': no_available_riders,  # Flag to show SweetAlert
         'message_notification_count': message_count,
+        'has_pending_or_transit_order': pending_or_on_transit_orders.exists(),  # Flag for SweetAlert
     }
-    
+
     # Render the cart page with the context
     return render(request, 'customer_cart.html', context)
+
+
 
 
 @login_required
 @require_POST
 def remove_cart_item(request, item_id):
     cart_item = get_object_or_404(CartItem, id=item_id)
-    
+
     # Fetch the customer related to the logged-in user
     customer = get_object_or_404(Customer, user=request.user)
-    
+
     # Ensure the cart item belongs to the logged-in user
     if cart_item.CustomerID != customer:
         return JsonResponse({'success': False, 'error': 'Unauthorized'}, status=403)
 
     cart_item.delete()
-    
+
     return JsonResponse({'success': True})
 
 def search_results(request):
@@ -1165,10 +1225,10 @@ def add_to_cart_from_search(request):
         try:
             # Get the menu item by FoodID
             item = Menu.objects.get(FoodID=food_id)
-            
+
             # Get the current customer
             customer = Customer.objects.get(user=request.user)
-            
+
             # Create or update the cart item for the customer
             cart_item, created = CartItem.objects.get_or_create(
                 CustomerID=customer,
@@ -1183,7 +1243,7 @@ def add_to_cart_from_search(request):
             # Return the updated cart count
             cart_count = CartItem.objects.filter(CustomerID=customer).count()
             return JsonResponse({'success': True, 'cart_count': cart_count})
-        
+
         except Menu.DoesNotExist:
             # Handle case where the menu item does not exist
             return redirect(reverse('search_results') + '?error=Item+not+found.')
@@ -1213,20 +1273,29 @@ def update_cart_item_quantity(request, item_id):
                 cart_item.delete()  # Remove the item if quantity is 0
                 return JsonResponse({'success': True})
         cart_item.save()
-        
+
         return JsonResponse({'success': True})
 @login_required
 def view_favorites(request):
     # Get all favorite items for the logged-in customer
     customer_profile = get_object_or_404(Customer, user=request.user)
     favorites = Favorite.objects.filter(CustomerID=customer_profile)
-    message_count = Message.objects.filter(receiver=request.user).count()
+    message_count = Message.objects.filter(sender=request.user).count()
+
+    rider_id = None  # Or fetch dynamically from active orders or some other logic
+    try:
+        active_delivery = Delivery.objects.filter(CustomerID=customer_profile).exclude(DeliveryStatus='Delivered').first()
+        if active_delivery:
+            rider_id = active_delivery.RiderID.RiderID
+    except Delivery.DoesNotExist:
+        rider_id = None
 
     context = {
         'favorites': favorites,
         'username': request.user.username,
         'fullname': customer_profile.CustomerName,
         'message_notification_count': message_count,
+        'rider_id': rider_id
     }
     return render(request, 'customer_favorites.html', context)
 
@@ -1289,13 +1358,23 @@ def profile_settings(request):
         form = CustomerProfileUpdateForm(instance=customer_profile, initial=initial_data)
 
     success = 'success' in request.GET
-    message_count = Message.objects.filter(receiver=request.user).count()
+    message_count = Message.objects.filter(sender=request.user).count()
+
+    rider_id = None  # Or fetch dynamically from active orders or some other logic
+    try:
+        active_delivery = Delivery.objects.filter(CustomerID=customer_profile).exclude(DeliveryStatus='Delivered').first()
+        if active_delivery:
+            rider_id = active_delivery.RiderID.RiderID
+    except Delivery.DoesNotExist:
+        rider_id = None
+
     return render(request, 'customer_profile.html', {
         'form': form,
         'customer': customer_profile,
         'success': success,
         'error_message': error_message,
         'message_notification_count': message_count,
+        'rider_id': rider_id,
     })
 
 
@@ -1737,7 +1816,7 @@ def disapprove_payment_proof(request, order_id):
 
             # Fetch the assigned rider for the delivery
             rider = delivery.RiderID  # Assuming the RiderID field holds the rider's information
-            
+
             # Send an email to the rider
             if rider and rider.Email:
                 send_mail(
@@ -1757,7 +1836,7 @@ def disapprove_payment_proof(request, order_id):
 
         # Redirect back to the list of pending proofs
         return redirect('admin_pending_proofs')
-    
+
     except Order.DoesNotExist:
         # Handle the case where the order doesn't exist or is not in Pending status
         return redirect('admin_pending_proofs')
@@ -1819,9 +1898,15 @@ def reorder(request, order_id):
 
 @login_required
 def order_history(request):
+    customer_profile = Customer.objects.get(user=request.user)
     # Get the customer instance based on the logged-in user
-    customer = Customer.objects.get(user=request.user)
-    
+    try:
+        customer = Customer.objects.get(user=request.user)
+    except Customer.DoesNotExist:
+        # Handle the case where the customer does not exist
+        logger.error("Customer does not exist for user: %s", request.user.username)
+        return redirect('error_page')  # Replace with a valid error page
+
     # Get all deliveries related to the current customer with status 'Received', excluding 'Cancelled'
     deliveries = Delivery.objects.filter(
         CustomerID=customer,
@@ -1829,7 +1914,7 @@ def order_history(request):
     ).prefetch_related('delivery_items').select_related('RiderID', 'RestaurantID')
 
     if not deliveries:
-        logger.debug("No deliveries found for customer: %s", customer.id)
+        logger.debug("No deliveries found for customer: %s", customer.CustomerID)
 
     # Create a list to store the order details
     order_details = []
@@ -1852,7 +1937,7 @@ def order_history(request):
         if delivery.delivery_items.exists():
             # Set the restaurant name using the first food item if available
             order_info['RestaurantName'] = delivery.delivery_items.first().FoodID.restaurant.RestaurantName
-            
+
             # Add each item to the Items list
             for item in delivery.delivery_items.all():
                 order_info['Items'].append({
@@ -1867,12 +1952,20 @@ def order_history(request):
 
     # If no order details are found, log it
     if not order_details:
-        logger.debug("No order details found for customer.")
+        logger.debug("No order details found for customer: %s", customer.CustomerID)
 
-    message_count = Message.objects.filter(receiver=request.user).count()
+    message_count = Message.objects.filter(sender=request.user).count()
+
+    rider_id = None
+    try:
+        active_delivery = Delivery.objects.filter(CustomerID=customer_profile).exclude(DeliveryStatus='Delivered').first()
+        if active_delivery:
+            rider_id = active_delivery.RiderID.RiderID
+    except Delivery.DoesNotExist:
+        rider_id = None
 
     # Pass the order details to the template
-    return render(request, 'customer_order_history.html', {'orders': order_details, 'message_notification_count': message_count})
+    return render(request, 'customer_order_history.html', {'orders': order_details, 'message_notification_count': message_count, 'rider_id': rider_id})
 
 @login_required
 def submit_feedback(request, delivery_id):
@@ -1962,24 +2055,24 @@ def get_rider_notifications(rider_id):
 
     # Fetch new orders for this rider from the last 24 hours
     new_orders = Delivery.objects.filter(
-        RiderID=rider, 
-        DeliveryStatus='Pending', 
+        RiderID=rider,
+        DeliveryStatus='Pending',
         Date__gte=timezone.now() - timedelta(days=1)
     )
-    
+
     # Add notifications for new orders without timestamp
     for order in new_orders:
         notifications.append({
             'message': f'You have a new order from {order.CustomerID.CustomerName} at {order.RestaurantID.RestaurantName}.',
         })
-    
+
     # Add notifications for cancelled deliveries without timestamp
     cancelled_orders = Delivery.objects.filter(
-        RiderID=rider, 
-        DeliveryStatus='Cancelled', 
+        RiderID=rider,
+        DeliveryStatus='Cancelled',
         Date__gte=timezone.now() - timedelta(days=1)
     )
-    
+
     for order in cancelled_orders:
         notifications.append({
             'message': f"Delivery ID # {order.DeliveryID} has been cancelled.",
@@ -2011,9 +2104,10 @@ def admin_notifications(request):
 @login_required
 def rider_notifications(request):
     rider = request.user.rider
-    
+
     # Retrieve notifications from the session or generate new ones if not available
     notifications = request.session.get('notifications', get_rider_notifications(rider.RiderID))
+    message_count = Message.objects.filter(sender=request.user, receiver=rider.user).count()
 
     # Clear notifications if there is a POST request
     if request.method == 'POST':
@@ -2027,6 +2121,7 @@ def rider_notifications(request):
     context = {
         'notifications': notifications,
         'notification_count': notification_count,
+        'message_notification_count': message_count,
         'rider': rider,
     }
 
@@ -2070,14 +2165,14 @@ def rider_profile_update(request):
 @login_required
 def rider_delivery_history(request):
     rider = request.user.rider
-    
+
     # Assuming get_rider_notifications fetches the notifications already
     rider_notifications = get_rider_notifications(rider.RiderID)
     notification_count = len(rider_notifications)
 
     # Exclude 'Cancelled' deliveries from the history
     deliveries = Delivery.objects.filter(
-        RiderID=rider, 
+        RiderID=rider,
         DeliveryStatus__in=['Received'],  # Only include 'Received' deliveries, exclude 'Cancelled'
         is_archived=False
     )
@@ -2085,7 +2180,7 @@ def rider_delivery_history(request):
     # If you already have rider_notifications, use that instead of querying Notification table
     latest_notifications = rider_notifications[-10:]  # Get the latest 10 notifications
     notification_count = len(latest_notifications)
-    message_count = Message.objects.filter(receiver=request.user).count()
+    message_count = Message.objects.filter(sender=request.user, receiver=rider.user).count()
 
     context = {
         'deliveries': deliveries,
@@ -2106,7 +2201,7 @@ def rider_archived_deliveries(request):
     # Get rider notifications using the custom function
     rider_notifications = get_rider_notifications(rider.RiderID)
     notification_count = len(rider_notifications)
-    message_count = Message.objects.filter(receiver=request.user).count()
+    message_count = Message.objects.filter(sender=request.user, receiver=rider.user).count()
 
     # Get the deliveries that are archived
     archived_deliveries = Delivery.objects.filter(RiderID=rider, is_archived=True)
@@ -2121,7 +2216,7 @@ def rider_archived_deliveries(request):
         'message_notification_count': message_count,
         'rider': rider,
     }
-    
+
     return render(request, 'rider_archived_deliveries.html', context)
 
 
@@ -2155,7 +2250,7 @@ def rider_transactions(request):
 
     # Pass the deliveries and rider to the template
 
-    message_count = Message.objects.filter(receiver=request.user).count()
+    message_count = Message.objects.filter(sender=request.user, receiver=rider.user).count()
     context = {
         'deliveries': deliveries,
         'notification_count': notification_count,
@@ -2238,7 +2333,7 @@ def view_riders(request):
     else:
         # Display all accepted riders
         riders = Rider.objects.filter(Status='accepted')  # Filter only accepted riders
-    
+
     notifications = request.session.get('notifications', get_notifications())
     notification_count = len(notifications)
 
@@ -2258,17 +2353,17 @@ def delete_rider(request, rider_id):
         return redirect('view_riders')  # Redirect after deletion
     else:
         return redirect('view_riders')
-    
+
 @csrf_exempt
 def update_availability(request):
     if request.method == 'POST':
         try:
             data = json.loads(request.body)  # Get the JSON data from the request
             availability_status = data.get('availability')  # Extract availability from the request data
-            
+
             # Retrieve the current rider
             rider = Rider.objects.get(user=request.user)  # Assuming the user is authenticated
-            
+
             # Update the availability
             rider.Availability = availability_status
             rider.save()
@@ -2318,7 +2413,7 @@ def check_username(request):
 def verify_otp(request):
     user_otp = request.GET.get('otp')
     session_otp = request.session.get('reset_otp')
-    
+
     if str(user_otp) == str(session_otp):
         return JsonResponse({'verified': True})
     else:
@@ -2360,11 +2455,14 @@ def customer_chat(request, rider_id):
             Q(sender=rider.user) | Q(receiver=rider.user)
         ).order_by('timestamp')
 
+        message_count = Message.objects.filter(sender=request.user).count()
+
         # Pass data to the template
         context = {
             'customer': customer,
             'rider': rider,
             'messages': messages,
+            'message_notification_count': message_count,
         }
 
         return render(request, 'customer_chat.html', context)
@@ -2373,6 +2471,8 @@ def customer_chat(request, rider_id):
         return JsonResponse({'error': 'Customer not found'}, status=404)
     except Rider.DoesNotExist:
         return JsonResponse({'error': 'Rider not found'}, status=404)
+
+
 
 @login_required
 def rider_chat(request, rider_id):
@@ -2415,6 +2515,8 @@ def rider_chat(request, rider_id):
 
     except Rider.DoesNotExist:
         return JsonResponse({'error': 'Rider not found'}, status=404)
+    
+
 
 @login_required
 def send_message(request):
@@ -2477,7 +2579,7 @@ def delete_conversation(request):
             return JsonResponse({'success': False, 'error': 'Rider not found'})
         except Exception as e:
             return JsonResponse({'success': False, 'error': str(e)})
-        
+
 def toggle_menu_availability(request, food_id):
     """
     View to toggle the availability of a menu item.
@@ -2497,7 +2599,7 @@ def toggle_menu_availability(request, food_id):
             'is_available': menu_item.is_available,
             'message': f"{menu_item.FoodName} is now {'available' if menu_item.is_available else 'unavailable'}."
         })
-    
+
     # If the request method is not POST or not an AJAX request, return an error response
     return JsonResponse({'success': False, 'message': 'Invalid request'}, status=400)
 

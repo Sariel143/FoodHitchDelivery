@@ -27,15 +27,11 @@
         <video autoplay muted loop id="background-video">
             <source src="{% static 'images/backgroundvid.mp4' %}" type="video/mp4">
         </video>
-        
     </section>
-    
     <div class="page2">
         <h1>Hungry? Your favorite meals are just a click away.</h1><br> <p>Get them delivered fast and fresh!</p>
         <a href="{% url 'customer_login' %}" class="cta-button">Order Now</a>
     </div>
-
-
     <div class="page3">
         <img src="{% static 'images/picmenu.png' %}" alt="Logo" class="logo">
         <div class="text-content">
@@ -63,8 +59,6 @@
                 <img src="static/images/gmail.png" alt="Gmail Icon" />            </a>
         </div>
     </footer>
-
     {% block content %}{% endblock %}
-
 </body>
 </html>

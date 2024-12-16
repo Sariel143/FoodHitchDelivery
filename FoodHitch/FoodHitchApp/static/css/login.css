@@ -154,4 +154,75 @@ button:hover {
 .horizontal-links a:hover {
     color: rgb(63, 63, 63);
 }
+@media (max-width: 768px) {
+    .container {
+        width: 90%; /* Adjust width to fit smaller screens */
+        margin-left: auto;
+        margin-right: auto;
+        text-align: center;
+        height: 500px; /* Fixed height for a nicer look */
+        border-radius: 20px; /* Slightly softer corners for smaller screens */
+    }
 
+    .logo {
+        display: none; /* Hide the logo for mobile view */
+    }
+
+    .login-form {
+        padding: 20px; /* Reduce padding for smaller screens */
+    }
+
+    .login-form h2 {
+        font-size: 20px;
+        margin: 0; /* No margin for centering */
+        text-align: center; /* Centers text horizontally */
+    }
+
+    .login-form label {
+        display: block;
+        margin-bottom: 7px;
+        color: black;
+        font-size: 1.1rem;
+        margin-right: 55%;
+    }
+
+    input[type="text"],
+    input[type="password"] {
+        width: 70%; /* Adjust width to allow label and input on the same line */
+        font-size: 1rem; /* Adjust font size for better readability */
+    }
+
+    button {
+        font-size: 16px; /* Smaller button text */
+        padding: 8px; /* Adjust padding */
+    }
+
+    .sign-link p {
+        font-size: 0.9rem; /* Adjust font size */
+    }
+}
+
+/* For phones (small screens) */
+@media (max-width: 480px) {
+    .container {
+        height: 450px; /* Adjusted height for smaller screens */
+    }
+
+    .login-form label {
+        display: block;
+        margin-bottom: 7px;
+        color: black;
+        font-size: 1.1rem;
+        margin-right: 55%;
+    }
+
+    .logo {
+        display: none; /* Hide the logo */
+    }
+
+    input[type="text"],
+    input[type="password"] {
+        width: 90%; /* Slightly reduced width */
+        font-size: 1rem;
+    }
+}
