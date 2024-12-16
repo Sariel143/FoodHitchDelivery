@@ -159,14 +159,13 @@ button:hover {
         width: 90%; /* Adjust width to fit smaller screens */
         margin-left: auto;
         margin-right: auto;
-        height: auto; /* Adjust height dynamically */
+        text-align: center;
+        height: 500px; /* Fixed height for a nicer look */
         border-radius: 20px; /* Slightly softer corners for smaller screens */
     }
 
-    .logo img {
-        width: 100%; /* Make the image responsive */
-        height: auto; /* Maintain aspect ratio */
-        border-radius: 20px 20px 0 0; /* Adjust corner radius */
+    .logo {
+        display: none; /* Hide the logo for mobile view */
     }
 
     .login-form {
@@ -174,13 +173,22 @@ button:hover {
     }
 
     .login-form h2 {
-        font-size: 20px; /* Smaller font for headings */
-        margin-top: 0; /* Adjust margins */
+        font-size: 20px;
+        margin: 0; /* No margin for centering */
+        text-align: center; /* Centers text horizontally */
+    }
+
+    .login-form label {
+        display: block;
+        margin-bottom: 7px;
+        color: black;
+        font-size: 1.1rem;
+        margin-right: 55%;
     }
 
     input[type="text"],
     input[type="password"] {
-        width: 100%; /* Full width inputs */
+        width: 70%; /* Adjust width to allow label and input on the same line */
         font-size: 1rem; /* Adjust font size for better readability */
     }
 
@@ -195,26 +203,26 @@ button:hover {
 }
 
 /* For phones (small screens) */
-/* For smaller screens, ensure the logo is in the top-left corner */
 @media (max-width: 480px) {
-    .logo {
-        position: absolute; /* Ensure the logo is positioned relative to the viewport */
-        top: 0; /* Align to the very top */
-        left: 0; /* Align to the very left */
-        padding: 10px; /* Optional: Add some padding for spacing */
-        z-index: 1000; /* Ensure the logo stays above other elements */
+    .container {
+        height: 450px; /* Adjusted height for smaller screens */
     }
 
-    .logo img {
-        width: 80px; /* Adjust size for small screens */
-        height: auto; /* Maintain aspect ratio */
-        border-radius: 50%; /* No rounded corners for a cleaner look */
-        box-shadow: none; /* Remove shadow for simplicity on small screens */
-        margin-left: 200%;
+    .login-form label {
+        display: block;
+        margin-bottom: 7px;
+        color: black;
+        font-size: 1.1rem;
+        margin-right: 55%;
     }
+
+    .logo {
+        display: none; /* Hide the logo */
+    }
+
     input[type="text"],
     input[type="password"] {
-        width: 90%; /* Full width inputs */
-        font-size: 1rem; /* Adjust font size for better readability */
+        width: 90%; /* Slightly reduced width */
+        font-size: 1rem;
     }
 }

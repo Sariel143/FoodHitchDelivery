@@ -55,14 +55,14 @@ from .views import (
     rider_transactions,
     rider_profile_update,
     calculate_delivery_fee,
-    place_order, 
-    get_rider_location,
+    place_order,
+    rider_location,
     view_riders,
-    delete_rider,admin_register,
+    delete_rider,
     update_delivery_status,
-    rider_earnings,toggle_menu_availability,
+    rider_earnings,toggle_menu_availability,admin_register,
     rider_notifications, notify_rider_view, message_notification_count,
-    update_store_owner_profile, reorder, update_availability, password_reset_request, password_reset_set, 
+    update_store_owner_profile, reorder, update_availability, password_reset_request, password_reset_set,
     check_username, remove_favorite, verify_otp, owner_restaurants, archive_delivery, rider_archived_deliveries,
     customer_chat, send_message, rider_chat, delete_conversation, admin_pending_proofs, approve_payment_proof, disapprove_payment_proof
 )
@@ -81,13 +81,13 @@ urlpatterns = [
     path('owner/<int:owner_id>/restaurants/', owner_restaurants, name='owner_restaurants'),
     path('archive-delivery/<int:delivery_id>/', archive_delivery, name='archive_delivery'),
     path('archived-deliveries/', rider_archived_deliveries, name='rider_archived_deliveries'),
-    path('message-notification-count/', message_notification_count, name='message_notification_count'),
     path('admin_register/', admin_register, name='admin_register'),
+    path('message-notification-count/', message_notification_count, name='message_notification_count'),
 
-    
 
 
-    # Customer and Menu 
+
+    # Customer and Menu
     path('otp-verification/', otp_verification, name='otp_verification'),
     path('customer_home/', customer_home, name='customer_home'),
     path('restaurant/<int:restaurant_id>/customer_menu/', view_menu, name='view_menu'),
@@ -148,7 +148,7 @@ urlpatterns = [
     path('rider_transactions/', rider_transactions, name='rider_transactions'),
     path('rider_profile_update/', rider_profile_update, name='rider_profile_update'),
     path('place_order/', place_order, name='place_order'),
-    path('rider/location/<int:RiderID>/', get_rider_location, name='get_rider_location'),
+    path('rider/location/<int:rider_id>/',rider_location, name='rider_location'),
     path('view_riders/', view_riders, name='view_riders'),
     path('view_riders/<int:rider_id>/delete/', delete_rider, name='delete_rider'),
     path('update-delivery-status/', update_delivery_status, name='update_delivery_status'),
