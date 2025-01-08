@@ -6,12 +6,13 @@
 {% block content %}
 {% load static %}
 
-<div class="main-content">
     <div class="page-header"> <!-- New container for h1 and h2 -->
         <h1 class="page-title">Order Transactions</h1>
         <h4 class="subtitle">Monitor and update delivery progress</h4>
     </div>
-    <div class="transaction-container">       
+
+
+    <div class="transaction-container">
         {% if deliveries %}
             {% for delivery in deliveries %}
             <div class="transaction-card" data-delivery-id="{{ delivery.DeliveryID }}">
@@ -20,48 +21,78 @@
                     <p><strong>Delivery ID:</strong> {{ delivery.DeliveryID }}</p>
                     <p><strong>Customer Name:</strong> {{ delivery.CustomerID.CustomerName }}</p>
                     <p><strong>Address:</strong> {{ delivery.Address }}</p>
+                    <p><strong>Phone Number:</strong> {{ delivery.CustomerID.Phone }}</p>
                     <p><strong>Restaurant Name:</strong> {{ delivery.RestaurantID.RestaurantName }}</p>
                     <p><strong>Total Payable:</strong> ₱{{ delivery.TotalPayableAmount }}</p>
-                    
+
                     <p><strong>Ordered Menu:</strong></p>
                         {% for delivery_item in delivery.delivery_items.all %}
                             <li>
-                                {{ delivery_item.FoodID.FoodName }} - x{{ delivery_item.Quantity }} 
-                                (Price: {{ delivery_item.FoodID.Price }})
+                                {{ delivery_item.FoodID.FoodName }} - x{{ delivery_item.Quantity }}
+                                (Price: ₱{{ delivery_item.FoodID.Price }})
                             </li>
                         {% endfor %}
-                    
+
 
                     <p><strong>Payment Method:</strong> {{ delivery.OrderID.PaymentMethod }}</p>
                     <p><strong>Payment Status:</strong> {{ delivery.OrderID.PaymentStatus }}</p> <!-- Display Payment Status -->
 
-                    <p class="status"><strong>Delivery Status:</strong> 
-                        <span class="status-indicator" data-delivery-id="{{ delivery.DeliveryID }}" 
-                        {% if delivery.DeliveryStatus == 'In Transit' %} class="status-indicator status-in-transit" 
-                        {% elif delivery.DeliveryStatus == 'Delivered' %} class="status-indicator status-delivered" 
+                    <p class="status"><strong>Delivery Status:</strong>
+                        <span class="status-indicator" data-delivery-id="{{ delivery.DeliveryID }}"
+                        {% if delivery.DeliveryStatus == 'In Transit' %} class="status-indicator status-in-transit"
+                        {% elif delivery.DeliveryStatus == 'Delivered' %} class="status-indicator status-delivered"
                         {% else %} class="status-indicator status-pending" {% endif %}>
                         {{ delivery.DeliveryStatus }}
                     </span>
-                    
+
                 </div>
                 {% if delivery.OrderID.PaymentStatus == 'Pending' %}
                 <p class="payment-status-message" style="color: red; font-style: italic;">The proof of payment is being reviewed by the admin. Please stand by.</p>
             {% elif delivery.OrderID.PaymentStatus == 'Approved' %}
+            {% if delivery.DeliveryStatus != 'Delivered' %}
+
                 <button class="track-button" style="margin-bottom: 30px;" onclick="trackCustomer('{{ delivery.Address }}')">Track Customer Location</button>
-                <form class="status-update-form" data-delivery-id="{{ delivery.DeliveryID }}">
+                <form class="status-update-form" data-delivery-id="{{ delivery.DeliveryID }}" enctype="multipart/form-data">
                     {% csrf_token %}
-                    <button type="button" name="status" value="In Transit" class="status-button in-transit" onclick="updateStatus('{{ delivery.DeliveryID }}', 'On Transit')">Mark as In Transit</button>
-                    <button type="button" name="status" value="Delivered" class="status-button delivered" onclick="updateStatus('{{ delivery.DeliveryID }}', 'Delivered')">Mark as Delivered</button>
+                    <div class="button-group">
+                            <button type="button" name="status" value="In Transit" class="status-button in-transit" onclick="updateStatus('{{ delivery.DeliveryID }}', 'On Transit')">Mark as In Transit</button>
+                            <br>
+                            <p>Please upload Proof of Delivery:</p>
+                            <div class="file-input-container">
+                                <input
+                                    type="file"
+                                    name="delivery_proof"
+                                    id="delivery_proof_{{ delivery.DeliveryID }}"
+                                    accept="image/*"
+                                    onchange="toggleDeliveredButton('{{ delivery.DeliveryID }}')"
+                                />
+                                <label for="delivery_proof_{{ delivery.DeliveryID }}" class="file-input-label">Choose a file</label>
+                                <span class="file-name" id="file-name-{{ delivery.DeliveryID }}"></span>
+                            </div>
+
+                            <!-- Mark as Delivered Button -->
+                            <button
+                                type="button"
+                                id="delivered_button_{{ delivery.DeliveryID }}"
+                                name="status"
+                                value="Delivered"
+                                class="status-button delivered"
+                                style="display: none;"
+                                onclick="updateStatus('{{ delivery.DeliveryID }}', 'Delivered')"
+                                disabled
+                            >
+                                Mark as Delivered
+                            </button>
+                        {% endif %}
+                    </div>
                 </form>
             {% endif %}
-            </div>
-            {% endfor %}
-
-
-        {% else %}
-            <p>No deliveries assigned to you.</p>
-        {% endif %}
-    </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <p>No deliveries assigned to you.</p>
+    {% endif %}
+</div>
 </div>
 
 <!-- Modal for Map -->
@@ -73,17 +104,17 @@
     </div>
 </div>
 
-<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAahMs9GBd2ChJopz74dhOjL8a0ZxXo9-k&callback=initializeMap" async defer></script>
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD2z-IxhB9cO0mLaNHwBAnRe0pOT0DQl4Y&callback=initializeMap" async defer></script>
 <script>
-
     var map;
     var directionsService;
     var directionsRenderer;
+    var customerMarker;
     var riderMarker;
 
     function initializeMap() {
         map = new google.maps.Map(document.getElementById('map'), {
-            center: { lat: 10.3157, lng: 123.8854 }, // Center in Argao
+            center: { lat: 10.3157, lng: 123.8854 }, // Default center
             zoom: 13
         });
 
@@ -93,119 +124,112 @@
     }
 
     function trackCustomer(address) {
+        if (!map || !directionsService || !directionsRenderer) {
+            console.error("Map or directions service not initialized.");
+            return;
+        }
+
         if (address) {
             console.log('Tracking customer at:', address);
-            
-            // Geocode the address to get latitude and longitude
+
             var geocoder = new google.maps.Geocoder();
-            geocoder.geocode({ 'address': address }, function(results, status) {
+            geocoder.geocode({ 'address': address }, function (results, status) {
                 if (status === 'OK') {
                     var customerLocation = results[0].geometry.location;
 
-                    // Show the modal
+                    // Display the modal
                     document.getElementById('mapModal').style.display = 'block';
 
-                    // After the modal is displayed, force the map to resize
-                    setTimeout(function() {
+                    // Resize map and set customer location
+                    setTimeout(function () {
                         google.maps.event.trigger(map, 'resize');
-                        map.setCenter(customerLocation);
+                        if (customerLocation) {
+                            map.setCenter(customerLocation);
+                        } else {
+                            console.error("Customer location not found.");
+                        }
                     }, 300);
 
-                    // Remove existing marker if exists
-                    if (riderMarker) {
-                        riderMarker.setMap(null);
+                    // Remove existing customer marker
+                    if (customerMarker) {
+                        customerMarker.setMap(null);
                     }
 
-                    // Create a new marker for the customer
-                    riderMarker = new google.maps.Marker({
+                    // Add a marker for the customer
+                    customerMarker = new google.maps.Marker({
                         position: customerLocation,
                         map: map,
-                        title: 'Customer Location'
+                        title: 'Customer Location',
+                        icon: 'https://maps.google.com/mapfiles/ms/icons/red-dot.png' // Optional: Red dot for customer
                     });
 
-                    // Get the rider's current location
-                    navigator.geolocation.getCurrentPosition(function(position) {
+                    // Get rider location and display route
+                    navigator.geolocation.getCurrentPosition(function (position) {
                         var riderLocation = {
                             lat: position.coords.latitude,
                             lng: position.coords.longitude
                         };
 
-                        // Request directions from rider's location to customer location
-                        calculateAndDisplayRoute(directionsService, directionsRenderer, riderLocation, customerLocation);
-                    }, function() {
-                        console.error('Error getting rider location.');
+                        // Remove existing rider marker
+                        if (riderMarker) {
+                            riderMarker.setMap(null);
+                        }
+
+                        // Add a motorcycle marker for the rider
+                        riderMarker = new google.maps.Marker({
+                            position: riderLocation,
+                            map: map,
+                            title: 'Rider Location',
+                            icon: {
+                                url: 'https://img.icons8.com/color/48/000000/motorbike.png', // Motorcycle icon
+                                scaledSize: new google.maps.Size(48, 48) // Resize icon to fit
+                            }
+                        });
+
+                        // Calculate route
+                        calculateAndDisplayRoute(riderLocation, customerLocation);
+                    }, function () {
+                        console.error("Error getting rider's location.");
                     });
                 } else {
-                    console.error('Geocode was not successful for the following reason: ' + status);
+                    console.error('Geocode failed: ' + status);
                 }
             });
         } else {
-            console.error('Invalid address:', address);
+            console.error("Invalid address.");
         }
     }
 
-    function calculateAndDisplayRoute(directionsService, directionsRenderer, riderLocation, customerLocation) {
+    function calculateAndDisplayRoute(riderLocation, customerLocation) {
+        if (!directionsService || !directionsRenderer) {
+            console.error("Directions service or renderer not initialized.");
+            return;
+        }
+
         directionsService.route({
             origin: riderLocation,
             destination: customerLocation,
-            travelMode: 'DRIVING'
-        }, function(response, status) {
-            if (status === 'OK') {
+            travelMode: google.maps.TravelMode.DRIVING
+        }, function (response, status) {
+            if (status === google.maps.DirectionsStatus.OK) {
                 directionsRenderer.setDirections(response);
-                document.getElementById('directionsPanel').innerHTML = ''; // Clear previous directions
+                document.getElementById('directionsPanel').innerHTML = ''; // Clear directions
             } else {
-                window.alert('Directions request failed due to ' + status);
+                console.error("Directions request failed: " + status);
             }
         });
     }
 
     function closeModal() {
         document.getElementById('mapModal').style.display = 'none';
+        if (customerMarker) {
+            customerMarker.setMap(null);
+        }
         if (riderMarker) {
             riderMarker.setMap(null);
         }
         directionsRenderer.setMap(null);
     }
-
-    function updateStatus(deliveryId, status) {
-    const requestBody = JSON.stringify({
-        delivery_id: deliveryId,
-        status: status
-    });
-
-    fetch('{% url "update_delivery_status" %}', {
-        method: 'POST',
-        body: requestBody,
-        headers: {
-            'Content-Type': 'application/json', // Send as JSON
-            'X-Requested-With': 'XMLHttpRequest',
-            'X-CSRFToken': '{{ csrf_token }}'
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            // Find the status display element for the updated delivery using data-delivery-id
-            const statusIndicator = document.querySelector(`.status-indicator[data-delivery-id="${deliveryId}"]`);
-            if (statusIndicator) {
-                statusIndicator.textContent = status; // Update the displayed status text
-                // Change the class for styling based on the status
-                statusIndicator.className = 'status-indicator ' + (status === 'On Transit' ? 'status-in-transit' : (status === 'Delivered' ? 'status-delivered' : 'status-pending'));
-            }
-
-            // Optionally, clear the chat or reload messages if needed
-            // For example, clearing the chat messages:
-            document.querySelector('#chat-messages').innerHTML = '';  // Clear the chat container
-
-            // Optionally reload messages after deletion:
-            location.reload();  // Reload the page to fetch the new set of messages
-        } else {
-            alert(data.error); // Show error if any
-        }
-    })
-    .catch(error => console.error('Error updating status:', error));
-}
-
 </script>
 
 <style>
@@ -213,7 +237,7 @@
     *{
         font-family: 'Poppins', sans-serif;
     }
-    
+
     body {
         background-color: #f0f4f8;
         font-family: 'Poppins', sans-serif;
@@ -222,9 +246,9 @@
     }
 
     .main-content {
-        padding: 20px;
         max-width: 900px;
-        margin: auto;
+    z-index: 999;
+    margin-top: 20px; /* Reduced top margin */
     }
 
     .transaction-title {
@@ -236,20 +260,23 @@
     }
 
     .transaction-container {
-        background-color: #ffffff;
-        border-radius: 10px;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-        padding: 40px;
-        margin-top: 20%;
-        margin-left: 200px;
-        width: 100%;
-    }
+    border-radius: 10px;
+    padding: 20px;
+    margin-top: 10px; /* Reduced margin-top to bring it closer to the header */
+    max-width: 900px; /* Limit the max width for better readability */
+    margin: auto; /* Center horizontally */
+    z-index: 999;
+}
+
 
     .transaction-card {
+        background-color: #ffffff; /* Ensure card has white background */
         border-radius: 10px;
-        padding: 20px;
-        margin-bottom: 20px;
-        
+        padding: 40px;
+        width: 100%;
+        margin-bottom: 20px; /* Adds gap between multiple transaction cards */
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+
     }
 
     .transaction-info p {
@@ -291,8 +318,15 @@
         padding: 10px 15px;
         cursor: pointer;
         transition: background-color 0.3s;
-        width: 48%;
+        width: 100%;
     }
+
+    .button-group {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 2px; /* Adds space between buttons and file input */
+}
 
 .status-button.in-transit {
     background-color: #f0b000;
@@ -304,7 +338,6 @@
 
 .status-button.delivered {
     background-color: #009914;
-    margin-left: 3%;
 }
 
 .status-button.delivered:hover {
@@ -370,7 +403,7 @@
     .transaction-info .status-indicator.status-pending {
         color: #dc3545;
     }
-    
+
 
 
 
@@ -378,7 +411,7 @@
         color: white;
         border: none;
         border-radius: 5px;
-        padding: 12px;
+        padding: 10px;
         cursor: pointer;
         margin-top: 15px;
         font-weight: bold;
@@ -391,6 +424,208 @@
 .history:hover {
     color: #009914;
     background-color: #f4f3f3;
+}
+/* Styling the file input container */
+.file-input-container {
+    position: relative;
+    width: 100%;
+    margin-top: 15px;
+}
+
+/* Hide the default file input */
+.file-input-container input[type="file"] {
+    display: none;
+}
+
+/* Custom button to trigger file input */
+.file-input-label {
+    display: inline-block;
+    background-color: #007bff;
+    color: white;
+    padding: 10px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+    text-align: center;
+    width: 100%;
+    transition: background-color 0.3s ease;
+}
+
+.file-input-label:hover {
+    background-color: #0056b3;
+}
+
+/* File name display */
+.file-name {
+    display: block;
+    margin-top: 10px;
+    color: #555;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+/* Show file name when a file is selected */
+.file-input-container input[type="file"]:valid + .file-input-label + .file-name {
+    color: #28a745; /* Green when file selected */
+}
+
+
+
+/* For screens 480px or smaller */
+@media (max-width: 480px) {
+    /* Adjusting container layout */
+    .transaction-container {
+        margin-top: 10%;  /* Reduced margin-top for better centering */
+        width: 90%; /* Ensure it takes up nearly the full width */
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    /* Transaction card adjustments */
+    .transaction-card {
+        padding: 15px;  /* Reduced padding for better fitting */
+        width: 100%; /* Ensure full width on smaller screens */
+    }
+
+    /* Adjusting the font sizes */
+    .transaction-info p {
+        font-size: 14px; /* Make text smaller to fit better */
+        line-height: 1.4;
+    }
+
+    .page-title {
+        font-size: 22px; /* Smaller title for small screens */
+    }
+
+    .subtitle {
+        font-size: 14px; /* Adjust subtitle size */
+    }
+
+    /* Adjusting button group layout */
+    .button-group {
+        flex-direction: column;  /* Stack buttons vertically on small screens */
+        align-items: stretch;     /* Ensure buttons stretch to fill available space */
+        gap: 6px; /* Space between stacked buttons */
+    }
+
+    .status-button {
+        width: 100%; /* Ensure buttons take full width */
+        margin-bottom: 8px; /* Add space between buttons */
+        padding: 12px; /* Make the button taller for easier tapping */
+        font-size: 14px;  /* Reduce font size */
+    }
+
+    /* Track button */
+    .track-button {
+        width: 100%; /* Ensure track button is full width */
+        font-size: 14px;
+        padding: 12px;
+    }
+
+    /* Modal content adjustments */
+    .modal-content {
+        width: 90%; /* Ensure modal content fits better on small screens */
+        padding: 15px;
+    }
+
+    /* Adjust modal button sizes and modal text */
+    .status-button, .track-button, .history {
+        font-size: 14px;
+        padding: 12px;
+    }
+
+    /* Adjust title font size for the modal */
+    .modal-content h3 {
+        font-size: 18px;
+    }
+
+    /* Reduce margins between sections in the modal */
+    .modal-content p {
+        margin-bottom: 10px;
+        font-size: 14px;
+    }
+
+    /* Ensure the status indicator and buttons have enough space */
+    .status-indicator {
+        font-size: 12px;
+        padding: 4px 8px; /* Slightly smaller padding */
+    }
+
+    /* Adjust margin for close button */
+    .close {
+        font-size: 24px;
+    }
+    .file-input-container {
+        width: 100%;
+        margin-top: auto;
+
+    }
+
+    .file-input-label {
+        padding: 12px;
+        font-size: 14px;
+    }
+
+    .file-name {
+        font-size: 12px;
+    }
+}
+
+
+
+
+
+/* For smaller screens (phones, tablets, and up to 767px wide) */
+@media (max-width: 768px) {
+    /* Adjusting container layout */
+    .transaction-container {
+        margin-top: 40%;  /* Added space from the top for centering */
+        width: 100%; /* Ensure it takes up full width */
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    /* Remove margins for the transaction card to fit better on smaller screens */
+    .transaction-card {
+        padding: 20px;
+    }
+
+    /* Adjust font sizes for better readability */
+    .transaction-info p {
+        font-size: 14px;
+    }
+
+    /* Adjust button group layout */
+    .button-group {
+        flex-direction: column;  /* Stack buttons vertically on small screens */
+        align-items: center;     /* Center the buttons vertically */
+    }
+
+    .status-button {
+        width: 100%; /* Make buttons full-width on small screens */
+        margin-bottom: 10px; /* Add space between stacked buttons */
+    }
+
+    .track-button {
+        width: 100%; /* Ensure the track button takes full width */
+    }
+
+    /* Modal width adjustment */
+    .modal-content {
+        width: 90%; /* Ensure the modal content fits better on smaller screens */
+    }
+    .file-input-container {
+        width: 100%;
+    }
+
+    .file-input-label {
+        padding: 12px;
+        font-size: 14px;
+    }
+
+    .file-name {
+        font-size: 12px;
+    }
 }
 </style>
 {% endblock %}

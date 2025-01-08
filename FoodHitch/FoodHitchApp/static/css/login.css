@@ -154,6 +154,9 @@ button:hover {
 .horizontal-links a:hover {
     color: rgb(63, 63, 63);
 }
+.mobile-logo {
+    display: none; /* Hide mobile logo by default */
+}
 @media (max-width: 768px) {
     .container {
         width: 90%; /* Adjust width to fit smaller screens */
@@ -164,10 +167,22 @@ button:hover {
         border-radius: 20px; /* Slightly softer corners for smaller screens */
     }
 
-    .logo {
-        display: none; /* Hide the logo for mobile view */
+    .logo img {
+        display: none; /* Hide the default logo */
     }
 
+    .mobile-logo {
+        display: block; /* Show the mobile logo */
+        position: absolute; /* Position it at the upper-left */
+        top: 10px; /* Small spacing from the top edge */
+        left: 10px; /* Small spacing from the left edge */
+        z-index: 1000; /* Ensure it stays on top */
+    }
+
+    .mobile-logo img {
+        width: 100px; /* Adjust the width of the mobile logo */
+        height: auto; /* Maintain aspect ratio */
+    }
     .login-form {
         padding: 20px; /* Reduce padding for smaller screens */
     }
@@ -216,8 +231,17 @@ button:hover {
         margin-right: 55%;
     }
 
-    .logo {
-        display: none; /* Hide the logo */
+    .logo img {
+        display: none; /* Still hide default logo */
+    }
+
+    .mobile-logo {
+        top: 5px; /* Adjust top spacing */
+        left: 5px; /* Adjust left spacing */
+    }
+
+    .mobile-logo img {
+        width: 70px; /* Smaller logo for very small screens */
     }
 
     input[type="text"],

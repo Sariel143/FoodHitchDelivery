@@ -37,11 +37,11 @@
             </li>
             {% endfor %}
         </ul>
-        
+
         <!-- Cart Summary -->
         <div class="cart-summary">
             <span class="total-price">Total: ₱<span id="total-price">{{ total_price|floatformat:2 }}</span></span>
-            
+
             <!-- Checkout Form -->
             <form id="checkout-form" action="{% url 'check_out' %}" method="POST">
                 {% csrf_token %}
@@ -55,6 +55,9 @@
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         const checkoutForm = document.getElementById('checkout-form');
+        const hasPendingOrder = "{{ has_pending_or_transit_order|yesno:'true,false' }}" === 'true';
+        const noAvailableRidersElement = document.getElementById('no-available-riders');
+        const noAvailableRiders = noAvailableRidersElement && noAvailableRidersElement.dataset.noAvailableRiders === 'true';
 
         checkoutForm.addEventListener('submit', function(event) {
             event.preventDefault(); // Prevent immediate form submission
@@ -90,15 +93,24 @@
             }
 
             // Check if there are no available riders
-            const noAvailableRidersElement = document.getElementById('no-available-riders');
-            const noAvailableRiders = noAvailableRidersElement && noAvailableRidersElement.dataset.noAvailableRiders === 'true';
-
             if (noAvailableRiders) {
-                // If no available riders, show SweetAlert with warning and redirect to homepage
+                // If no available riders, show SweetAlert with warning
                 Swal.fire({
                     title: 'No Riders Available',
                     text: 'Sorry, there are no available riders for delivery at the moment. Please try again later.',
                     icon: 'error',
+                    confirmButtonText: 'OK',
+                    confirmButtonColor: '#009914'
+                });
+                return;
+            }
+
+            // Check if there are pending orders
+            if (hasPendingOrder) {
+                Swal.fire({
+                    title: 'You still have an order!',
+                    text: "Please wait for your order to be delivered before placing a new one.",
+                    icon: 'warning',
                     confirmButtonText: 'OK',
                     confirmButtonColor: '#009914'
                 });
@@ -117,12 +129,12 @@
                 cancelButtonColor: '#d33'
             }).then((result) => {
                 if (result.isConfirmed) {
-                    checkoutForm.submit();
+                    checkoutForm.submit(); // Submit the form if confirmed
                 }
             });
         });
 
-        // Function to update cart item quantity
+        // Function to update cart item quantity (your existing functions for quantity changes)
         const updateCartItem = (itemId, action) => {
             fetch("{% url 'update_cart_item_quantity' 0 %}".replace('0', itemId), {
                 method: 'POST',
@@ -164,7 +176,7 @@
             });
         };
 
-        // Function to calculate and update the total price display
+        // Update cart total price
         const updateTotalPrice = () => {
             let totalPrice = 0;
             document.querySelectorAll('.cart-item').forEach(cartItem => {
@@ -175,7 +187,7 @@
             document.getElementById('total-price').textContent = totalPrice.toFixed(2);
         };
 
-        // Function to update the cart count (if displayed)
+        // Update cart count
         const updateCartCount = () => {
             fetch("{% url 'get_cart_count' %}")
             .then(response => response.json())
@@ -225,5 +237,113 @@
     });
 </script>
 
+<style>
+/* Media Queries for Small Screens */
+@media (max-width: 768px) {
+  .cart-container {
+    position: relative;
+    margin-top: 5%;
+    margin-left: 0 !important;
+  }
+  .cart-list {
+    margin-left: 0 !important;
+  }
+  .cart-item {
+    display: flex; /* Flex layout for the container */
+    align-items: center;
+    padding: 10px;
+    margin-bottom: 10px;
+    background-color: var(--whitecolor);
+    border-radius: 8px;
+    box-shadow: 0 1px 10px rgba(0, 0, 0, 0.1);
+    position: relative; /* Position relative for price positioning */
+  }
 
+  .cart-title {
+    font-size: 1.3em; /* Make title slightly smaller on mobile */
+  }
+
+  .cart-item img {
+    width: 30px;
+    height: 30px; /* Resize images smaller on mobile */
+  }
+
+  .item-details {
+    display: flex; /* Flex layout to align items */
+    justify-content: space-between; /* Space between name and price */
+    align-items: center;
+    width: 100%; /* Take full width */
+  }
+
+  /* Item name styling */
+  .item-name {
+    font-size: 0.5em; /* Adjust item name size */
+    white-space: nowrap; /* Prevent wrapping */
+    overflow: hidden; /* Prevent overflow */
+    text-overflow: ellipsis; /* Truncate text with ellipsis if too long */
+    flex-grow: 1; /* Allow item name to take up remaining space */
+  }
+
+  /* Item price styling */
+  .item-price {
+    font-size: 0.5em; /* Adjust price size */
+    white-space: nowrap; /* Prevent wrapping */
+    text-align: right; /* Align price to the right */
+    min-width: 60px; /* Minimum width for price */
+    position: absolute; /* Position absolutely inside cart-item */
+    right: 180px; /* Position price 10px from the right edge */
+  }
+
+  /* Adjust button and input controls */
+  .quantity-control {
+    display: flex;
+    align-items: center;
+    gap: 0.5px; /* Space between buttons and input */
+    position: absolute; /* Position absolutely inside cart-item */
+    left: 150px;
+  }
+
+  .quantity-control input {
+    width: 12px; /* Make the input box smaller */
+    height: 12px; /* Reduce height for smaller screens */
+    font-size: 8px; /* Make the font size smaller */
+    padding: 2px;
+  }
+
+  .quantity-control .btn-decrease,
+  .quantity-control .btn-increase {
+    padding: 2px 6px; /* Smaller padding for buttons */
+    font-size: 8px; /* Smaller button font size */
+  }
+
+  .btn-remove {
+    font-size: 8px; /* Smaller font for remove button */
+    padding: 4px 8px; /* Smaller padding for remove button */
+    margin-left: 10px;
+    position: absolute; /* Position absolutely inside cart-item */
+    left: 250px;    
+  }
+
+  .btn-checkout {
+    font-size: 16px; /* Smaller button text */
+    padding: 6px 12px; /* Smaller button padding */
+    width: 120px; /* Make the button smaller */
+  }
+
+  .total-price {
+    font-size: 0.9rem; /* Reduce font size of total price */
+  }
+
+  .cart-summary {
+    padding: 10px; /* Reduce padding */
+  }
+
+  .item-total-price {
+    font-size: 0.6rem; /* Reduce font size for total price per item */
+    margin-left: 10px;
+  }
+}
+
+
+</style>
 {% endblock %}

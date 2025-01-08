@@ -10,7 +10,7 @@
   <script type="module" src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.esm.js"></script>
   <script nomodule src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.js"></script>
   <script src="https://www.paypal.com/sdk/js?client-id=AZu6FUzyWch2r3UjD_6M8YoKoTVPjo3eXmli2voMiD_25rb2YEbiMur6QWRFpsTcEsG8ZRvY6qrI6h9N&currency=USD&disable-funding=credit"></script>
-  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAahMs9GBd2ChJopz74dhOjL8a0ZxXo9-k&callback=initializeMap" async defer></script>
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD2z-IxhB9cO0mLaNHwBAnRe0pOT0DQl4Y&callback=initializeMap" loading="async" defer></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap');
     * {
@@ -23,7 +23,7 @@
       display: flex;
       align-items: center;
       margin-left: 24%;
-      
+
 }
 .header .available-points {
   margin-left: 60%;
@@ -63,7 +63,7 @@
     p {
       font-weight: 600;
     }
-    
+
     label {
       display: block;
       margin-bottom: 5px;
@@ -115,7 +115,7 @@
     }
 
 
-  
+
 /* Container Styling */
 .container1 {
     font-family: 'Arial', sans-serif;
@@ -269,15 +269,15 @@ p {
 
       <button type="button" id="get-location">Use My Current Location</button>
 
-      <label for="subtotal">Subtotal:</label> 
+      <label for="subtotal">Subtotal:</label>
       <input type="number" id="subtotal" name="subtotal" value="{{ cart_total }}" readonly>
 
       <label for="delivery-fee">Delivery Fee:</label>
       <input type="number" id="delivery-fee" name="delivery-fee" value="{{ delivery_fee }}" readonly>
 
       <label for="points-used">Use Points:</label>
-      <input type="number" id="points-used" name="points-used" max="{{ customer_points }}" placeholder="Enter points" oninput="updateDeliveryFee()">
-      <button type="button" id="apply-points" onclick="applyRewardPoints()">Apply Points</button>
+      <input type="number" id="points-used" name="points-used" max="{{ customer_points }}" min="0" step="1" value="0" oninput="updateValues()">
+
 
       <label for="total-payable-amount">Total Payable Amount:</label>
       <input type="number" id="total-payable-amount" name="total-payable-amount" value="{{ total_amount }}" readonly>
@@ -305,11 +305,11 @@ p {
 
                   <div class="form-group">
                       <label for="payment-proof">Please upload the Proof of Payment:</label>
-                      <input type="file" id="payment-proof" name="proof_of_payment" accept="image/*" required>    
+                      <input type="file" id="payment-proof" name="proof_of_payment" accept="image/*" required>
       </div>
     </div>
-      
-      
+
+
       </div>
       <button type="button" id="confirm-order">Place Order</button>
 
@@ -318,7 +318,7 @@ p {
 
 
 
- <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
   function toggleGcashFields() {
@@ -338,63 +338,74 @@ p {
     window.history.back(); // Navigate to the previous page
   }
 
-  // Geolocation and reverse geocoding logic
   document.getElementById('get-location').addEventListener('click', function () {
     if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(success, error, { enableHighAccuracy: true });
+        navigator.geolocation.getCurrentPosition(
+            function (position) {
+                // Successfully retrieved location
+                const latitude = position.coords.latitude;
+                const longitude = position.coords.longitude;
 
-      function success(position) {
-        var latitude = position.coords.latitude;
-        var longitude = position.coords.longitude;
+                console.log("Your current location:");
+                console.log("Latitude:", latitude);
+                console.log("Longitude:", longitude);
 
-        // Reverse geocoding (Google Maps API)
-        var apiKey = 'AIzaSyAahMs9GBd2ChJopz74dhOjL8a0ZxXo9-k';  // Replace with your API key
-        var url = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${apiKey}`;
+                // Call the delivery fee calculation function
+                calculateDeliveryFee(latitude, longitude);
 
-        fetch(url)
-          .then(response => response.json())
-          .then(data => {
-            if (data.status === 'OK') {
-              var address = data.results[0].formatted_address;
-              document.getElementById('address').value = address;
+                // Reverse geocode to get the address
+                const apiKey = 'AIzaSyD2z-IxhB9cO0mLaNHwBAnRe0pOT0DQl4Y'; // Replace with your API key
+                const geocodeUrl = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${apiKey}`;
 
-              // Calculate and update delivery fee
-              calculateDeliveryFee(latitude, longitude);
-            } else {
-              alert('Unable to retrieve address. Please try again later.');
+                fetch(geocodeUrl)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === 'OK' && data.results.length > 0) {
+                            const address = data.results[0].formatted_address;
+                            document.getElementById('address').value = address; // Set the address input field
+                        } else {
+                            console.error("No address found for the current location.");
+                            alert("Unable to fetch your address. Please try again.");
+                        }
+                    })
+                    .catch(error => {
+                        console.error("Error with reverse geocoding:", error);
+                        alert("An error occurred while fetching your address.");
+                    });
+            },
+            function (error) {
+                // Handle error scenarios
+                switch (error.code) {
+                    case error.PERMISSION_DENIED:
+                        alert("User denied the request for Geolocation. Please enable location access in your browser.");
+                        break;
+                    case error.POSITION_UNAVAILABLE:
+                        alert("Location information is unavailable. Please check your device settings.");
+                        break;
+                    case error.TIMEOUT:
+                        alert("The request to get user location timed out. Please try again.");
+                        break;
+                    default:
+                        alert("An unknown error occurred. Please try again.");
+                }
+            },
+            {
+                enableHighAccuracy: true, // Use GPS for better accuracy
+                timeout: 10000, // Maximum time to wait for a response (in ms)
+                maximumAge: 0, // No cached position
             }
-          })
-          .catch(error => console.log('Error with reverse geocoding:', error));
-      }
-
-      function error(err) {
-        switch (err.code) {
-          case err.PERMISSION_DENIED:
-            alert('User denied the request for Geolocation. Please enable location access in your browser.');
-            break;
-          case err.POSITION_UNAVAILABLE:
-            alert('Location information is unavailable. Please check your device settings.');
-            break;
-          case err.TIMEOUT:
-            alert('The request to get user location timed out. Please try again.');
-            break;
-          case err.UNKNOWN_ERROR:
-            alert('An unknown error occurred. Please try again.');
-            break;
-        }
-      }
+        );
     } else {
-      alert('Geolocation is not supported by this browser.');
+        alert("Geolocation is not supported by this browser.");
     }
-  });
-
+});
   // Update delivery fee when address is typed
   document.getElementById('address').addEventListener('input', function() {
     var address = this.value;
 
     // Use Geocoding API to get the coordinates for the address
     if (address.length > 0) {
-      var apiKey = 'AIzaSyAahMs9GBd2ChJopz74dhOjL8a0ZxXo9-k';  // Replace with your API key
+      var apiKey = 'AIzaSyD2z-IxhB9cO0mLaNHwBAnRe0pOT0DQl4Y';  // Replace with your API key
       var url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=${apiKey}`;
 
       fetch(url)
@@ -424,17 +435,21 @@ p {
       .catch(error => console.log('Error calculating delivery fee:', error));
   }
 
+  var originalDeliveryFee = parseFloat(document.getElementById('delivery-fee').value);
+
+
   // Function to update total amount (subtotal + delivery fee)
   function updateTotalAmount() {
-    var subtotal = parseFloat(document.getElementById('subtotal').value);
-    var deliveryFee = parseFloat(document.getElementById('delivery-fee').value);
-    var totalAmount = subtotal + deliveryFee;
-    document.getElementById('total-payable-amount').value = totalAmount.toFixed(2);
+    var subtotal = parseFloat(document.getElementById('subtotal').value);  // Get the subtotal
+    var deliveryFee = parseFloat(document.getElementById('delivery-fee').value);  // Get the adjusted delivery fee
+    var totalAmount = subtotal + deliveryFee;  // Calculate total
+    document.getElementById('total-payable-amount').value = totalAmount.toFixed(2);  // Update the total payable amount
   }
 
   // Insert logic for reward points deduction (APPLY BUTTON)
-  function applyRewardPoints() {
-    var deliveryFee = parseFloat(document.getElementById('delivery-fee').value);
+  // Function to update the delivery fee when points are used
+  function updateDeliveryFeeBasedOnPoints() {
+    var deliveryFee = parseFloat(document.getElementById('delivery-fee').value);  // Get the current delivery fee
     var pointsUsed = parseFloat(document.getElementById('points-used').value) || 0; // Default to 0 if empty
 
     // Ensure points used do not exceed available points
@@ -449,13 +464,15 @@ p {
       return; // Stop further calculation if points are invalid
     }
 
-    // Adjust the delivery fee based on the points entered
-    var adjustedDeliveryFee = Math.max(0, deliveryFee - pointsUsed); // Ensure no negative delivery fee
+    // Calculate the adjusted delivery fee: Subtract points if increasing or add back if decreasing
+    var adjustedDeliveryFee = originalDeliveryFee - pointsUsed; // Decrease based on points used
+    adjustedDeliveryFee = Math.max(0, adjustedDeliveryFee); // Prevent going below zero
     document.getElementById('delivery-fee').value = adjustedDeliveryFee.toFixed(2); // Update delivery fee
 
     // Update the total payable amount after adjusting the delivery fee
     updateTotalAmount();
   }
+
 
   // Restore the original delivery fee if points field is cleared
   document.getElementById('points-used').addEventListener('input', function() {
@@ -470,7 +487,7 @@ p {
         var address = document.getElementById('address').value;
         if (address) {
           // Call calculateDeliveryFee to restore the correct value
-          var apiKey = 'AIzaSyAahMs9GBd2ChJopz74dhOjL8a0ZxXo9-k';  // Replace with your API key
+          var apiKey = 'AIzaSyD2z-IxhB9cO0mLaNHwBAnRe0pOT0DQl4Y';  // Replace with your API key
           var url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=${apiKey}`;
           fetch(url)
             .then(response => response.json())
@@ -487,6 +504,10 @@ p {
   });
 
   updateTotalAmount();
+
+  document.getElementById('points-used').addEventListener('input', function() {
+    updateDeliveryFeeBasedOnPoints();
+  });
 
   // Place order logic
   document.getElementById('confirm-order').addEventListener('click', function () {
@@ -570,6 +591,6 @@ p {
 
 </script>
 
-  
+
 </body>
 </html>
